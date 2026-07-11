@@ -82,3 +82,47 @@ CACHE_DIR = DATASET_ROOT / "cache"
 PREVIEW_DIR = DATASET_ROOT / "preview"
 
 BACKUPS_DIR = DATASET_ROOT / "backups"
+
+
+# =============================================================================
+# Helper functions
+# =============================================================================
+
+def get_html_path(source: str, page_id: int) -> Path:
+    """
+    Возвращает путь к HTML-файлу кроссворда.
+
+    Parameters
+    ----------
+    source : str
+        Источник ("nonograms" или "nonograms2").
+
+    page_id : int
+        Идентификатор страницы.
+
+    Returns
+    -------
+    Path
+        Полный путь к HTML-файлу.
+
+    Examples
+    --------
+    >>> get_html_path("nonograms", 16323)
+    .../html/nonograms/16323.html
+
+    >>> get_html_path("nonograms2", 14596)
+    .../html/nonograms2/14596.html
+    """
+
+    if source == "nonograms":
+        folder = NONOGRAMS_HTML_DIR
+
+    elif source == "nonograms2":
+        folder = NONOGRAMS2_HTML_DIR
+
+    else:
+        raise ValueError(
+            f"Unknown source: {source}"
+        )
+
+    return folder / f"{page_id}.html"
