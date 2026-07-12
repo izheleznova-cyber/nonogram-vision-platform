@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from .d_header import DHeader, read_header
 
+from core.puzzle.hints import generate_hints
 from core.puzzle.model import Puzzle
 
 
@@ -68,7 +69,7 @@ def fill_matrix(
 
 def decode(
     data: list[list[int]],
-) -> DecodedPuzzle:
+) -> Puzzle:
     """
     Decode puzzle from array d.
     """
@@ -86,9 +87,14 @@ def decode(
         header,
     )
 
+    # Генерация подсказок
+    row_hints, column_hints = generate_hints(matrix)
+
     return Puzzle(
         width=header.columns,
         height=header.rows,
         colors=header.colors,
         matrix=matrix,
+        row_hints=row_hints,
+        column_hints=column_hints,
     )

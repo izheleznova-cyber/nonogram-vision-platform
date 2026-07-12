@@ -1,105 +1,101 @@
 """
 renderer.py
 
-Render Puzzle objects.
-
-Version 1
-
-    - render solution matrix
-    - black/white rendering
-    - PNG output
-
-Future versions will add:
-
-    - grid
-    - row hints
-    - column hints
-    - colors
+Rendering of a nonogram.
 """
-
-from __future__ import annotations
 
 from pathlib import Path
 
 from PIL import Image
+from PIL import ImageDraw
 
+from .layout import Layout
+from .layout import calculate_layout
 from .model import Puzzle
 
 
-CELL_SIZE = 12
+BACKGROUND = (255, 255, 255)
 
+GRID_COLOR = (180, 180, 180)
+MAJOR_GRID_COLOR = (0, 0, 0)
 
-def render_matrix(
-    matrix: list[list[int]],
-    output_path: Path,
-    cell_size: int = CELL_SIZE,
-) -> None:
-    """
-    Render puzzle matrix to a PNG image.
-    """
-
-    height = len(matrix)
-    width = len(matrix[0])
-
-    image = Image.new(
-        "RGB",
-        (
-            width * cell_size,
-            height * cell_size,
-        ),
-        "white",
-    )
-
-    pixels = image.load()
-
-    for row in range(height):
-
-        for col in range(width):
-
-            if matrix[row][col] == 0:
-                rgb = (255, 255, 255)
-            else:
-                rgb = (0, 0, 0)
-
-            x0 = col * cell_size
-            y0 = row * cell_size
-
-            for dy in range(cell_size):
-
-                for dx in range(cell_size):
-
-                    pixels[
-                        x0 + dx,
-                        y0 + dy,
-                    ] = rgb
-
-    image.save(output_path)
+THIN_WIDTH = 1
+THICK_WIDTH = 2
 
 
 def render_puzzle(
     puzzle: Puzzle,
-    output_path: Path,
-    cell_size: int = CELL_SIZE,
+    output: Path,
 ) -> None:
     """
-    Render Puzzle object.
-
-    Public renderer interface.
-
-    Parameters
-    ----------
-    puzzle
-        Puzzle object.
-
-    output_path
-        Output PNG filename.
-
-    cell_size
-        Pixel size of one puzzle cell.
+    Render puzzle to PNG file.
     """
 
-    render_matrix(
-        puzzle.matrix,
-        output_path,
-        cell_size,
+    layout = calculate_layout(puzzle)
+
+    image = Image.new(
+        "RGB",
+        (layout.image_width, layout.image_height),
+        BACKGROUND,
     )
+
+    draw = ImageDraw.Draw(image)
+
+    _draw_grid(
+        draw,
+        layout,
+    )
+
+    image.save(output)
+
+
+def _draw_grid(
+    draw: ImageDraw.ImageDraw,
+    layout: Layout,
+) -> None:
+    """
+    Draw puzzle grid.
+    """
+
+    left = layout.puzzle_x
+    top = layout.puzzle_y
+
+    right = left + layout.puzzle_width
+    bottom = top + layout.puzzle_height
+
+    cell = layout.cell_size
+
+    columns = layout.puzzle_width // cell
+    rows = layout.puzzle_height // cell
+
+    #
+    # Vertical lines
+    #
+
+    for x in range(columns + 1):
+
+        xx = left + x * cell
+
+        major = (x % 5) == 0
+
+        draw.line(
+            [(xx, top), (xx, bottom)],
+            fill=MAJOR_GRID_COLOR if major else GRID_COLOR,
+            width=THICK_WIDTH if major else THIN_WIDTH,
+        )
+
+    #
+    # Horizontal lines
+    #
+
+    for y in range(rows + 1):
+
+        yy = top + y * cell
+
+        major = (y % 5) == 0
+
+        draw.line(
+            [(left, yy), (right, yy)],
+            fill=MAJOR_GRID_COLOR if major else GRID_COLOR,
+            width=THICK_WIDTH if major else THIN_WIDTH,
+        )
