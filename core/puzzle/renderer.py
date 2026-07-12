@@ -71,8 +71,20 @@ def render_puzzle(
     layout,
     )
 
-    image.save(output)
+    _draw_column_hints(
+    draw,
+    puzzle,
+    layout,
+    )
 
+    
+    _draw_coordinates(
+        draw,
+        puzzle,
+        layout,
+    )
+
+    image.save(output)
 
 def _draw_grid(
     draw: ImageDraw.ImageDraw,
@@ -210,6 +222,77 @@ def _draw_row_hints(
                 font=FONT,
             )
 
+def _draw_column_hints(
+    draw: ImageDraw.ImageDraw,
+    puzzle: Puzzle,
+    layout: Layout,
+) -> None:
+    """
+    Draw top column hints.
+    """
+
+    cell = layout.cell_size
+
+    #
+    # Верхняя граница области подсказок
+    #
+    top = (
+        layout.puzzle_y
+        - layout.top_hint_cells * cell
+    )
+
+    for col, hints in enumerate(puzzle.column_hints):
+
+        #
+        # Левая координата столбца
+        #
+        x = (
+            layout.puzzle_x
+            + col * cell
+        )
+
+        hint_count = len(hints)
+
+        #
+        # Первая занятая ячейка
+        #
+        start_cell = (
+            layout.top_hint_cells
+            - hint_count
+        )
+
+        for index, (length, color) in enumerate(hints):
+
+            #
+            # Верхняя граница текущей ячейки
+            #
+            cell_top = (
+                top
+                + (start_cell + index) * cell
+            )
+
+            text = str(length)
+
+            bbox = draw.textbbox(
+                (0, 0),
+                text,
+                font=FONT,
+            )
+
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+
+            draw.text(
+                (
+                    x + (cell - text_width) // 2,
+                    cell_top + (cell - text_height) // 2,
+                ),
+                text,
+                fill="black",
+                font=FONT,
+            )
+
+
 def _draw_hint_grid(
     draw: ImageDraw.ImageDraw,
     layout: Layout,
@@ -304,3 +387,115 @@ def _draw_hint_indexes(
                 fill="red",
                 font=FONT,
             )
+def _draw_coordinates(
+    draw: ImageDraw.ImageDraw,
+    puzzle: Puzzle,
+    layout: Layout,
+) -> None:
+    """
+    Draw row and column coordinate labels.
+    """
+
+    cell = layout.cell_size
+
+    #
+    # Row numbers (right)
+    #
+
+    x = layout.puzzle_x + layout.puzzle_width + 4
+
+    for row in range(5, puzzle.height + 1, 5):
+
+        y = (
+            layout.puzzle_y
+            + (row - 1) * cell
+            + cell // 2
+        )
+
+        text = str(row)
+
+        bbox = draw.textbbox(
+            (0, 0),
+            text,
+            font=FONT,
+        )
+
+        h = bbox[3] - bbox[1]
+
+        draw.text(
+            (
+                x,
+                y - h // 2,
+            ),
+            text,
+            fill="black",
+            font=FONT,
+        )
+
+    #
+    # Last row (if not multiple of 5)
+    #
+
+    if puzzle.height % 5:
+
+        row = puzzle.height
+
+        y = (
+            layout.puzzle_y
+            + (row - 1) * cell
+            + cell // 2
+        )
+
+        text = str(row)
+
+        bbox = draw.textbbox(
+            (0, 0),
+            text,
+            font=FONT,
+        )
+
+        h = bbox[3] - bbox[1]
+
+        draw.text(
+            (
+                x,
+                y - h // 2,
+            ),
+            text,
+            fill="black",
+            font=FONT,
+        )
+
+    #
+    # Column numbers (bottom)
+    #
+
+    y = layout.puzzle_y + layout.puzzle_height + 2
+
+    for col in range(5, puzzle.width + 1, 5):
+
+        x = (
+            layout.puzzle_x
+            + (col - 1) * cell
+            + cell // 2
+        )
+
+        text = str(col)
+
+        bbox = draw.textbbox(
+            (0, 0),
+            text,
+            font=FONT,
+        )
+
+        w = bbox[2] - bbox[0]
+
+        draw.text(
+            (
+                x - w // 2,
+                y,
+            ),
+            text,
+            fill="black",
+            font=FONT,
+        )

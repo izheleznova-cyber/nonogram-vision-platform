@@ -17,6 +17,8 @@ from .model import Puzzle
 CELL_SIZE = 20
 MARGIN = 10
 
+COORD_SIZE = 20
+
 
 @dataclass(slots=True)
 class Layout:
@@ -76,12 +78,14 @@ def calculate_layout(
         puzzle_x
         + puzzle_width
         + margin
+        + COORD_SIZE
     )
 
     image_height = (
         puzzle_y
         + puzzle_height
         + margin
+        + COORD_SIZE
     )
 
     return Layout(
