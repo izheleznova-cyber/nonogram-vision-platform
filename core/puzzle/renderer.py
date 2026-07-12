@@ -22,6 +22,9 @@ MAJOR_GRID_COLOR = (0, 0, 0)
 THIN_WIDTH = 1
 THICK_WIDTH = 2
 
+DEBUG_HINT_GRID = True
+DEBUG_HINT_INDEX = False 
+
 
 def render_puzzle(
     puzzle: Puzzle,
@@ -44,6 +47,24 @@ def render_puzzle(
     _draw_grid(
         draw,
         layout,
+    )
+
+    if DEBUG_HINT_GRID:
+        _draw_hint_grid(
+            draw,
+            layout,
+        )
+
+    if DEBUG_HINT_INDEX:
+        _draw_hint_indexes(
+            draw,
+            layout,
+        )
+
+    _draw_row_hints(
+    draw,
+    puzzle,
+    layout,
     )
 
     image.save(output)
@@ -99,3 +120,189 @@ def _draw_grid(
             fill=MAJOR_GRID_COLOR if major else GRID_COLOR,
             width=THICK_WIDTH if major else THIN_WIDTH,
         )
+
+from PIL import ImageFont
+
+try:
+    FONT = ImageFont.truetype(
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        10,
+    )
+except OSError:
+    FONT = ImageFont.load_default()
+
+
+def _draw_row_hints(
+    draw: ImageDraw.ImageDraw,
+    puzzle: Puzzle,
+    layout: Layout,
+) -> None:
+    """
+    Draw left row hints.
+    """
+
+    cell = layout.cell_size
+
+    #
+    # Левая граница области подсказок
+    #
+    left = (
+        layout.puzzle_x
+        - layout.left_hint_cells * cell
+    )
+    
+
+    for row, hints in enumerate(puzzle.row_hints):
+
+        print(
+            row,
+            hints,
+            len(hints),
+            layout.left_hint_cells,
+        )
+        #
+        # Верхняя координата строки
+        #
+        y = (
+            layout.puzzle_y
+            + row * cell
+        )
+
+        hint_count = len(hints)
+
+        #
+        # Первая занятая ячейка
+        #
+        start_cell = (
+            layout.left_hint_cells
+            - hint_count
+        )
+
+        for index, (length, color) in enumerate(hints):
+
+            #
+            # Левая граница текущей ячейки
+            #
+            cell_left = (
+                left
+                + (start_cell + index) * cell
+            )
+
+            text = str(length)
+
+            #
+            # Только высота текста.
+            # По X больше НЕ центрируем.
+            #
+            bbox = draw.textbbox(
+                (0, 0),
+                text,
+                font=FONT,
+            )
+
+            text_height = bbox[3] - bbox[1]
+
+            draw.text(
+                (
+                    cell_left + 2,
+                    y + (cell - text_height) // 2,
+                ),
+                text,
+                fill="black",
+                font=FONT,
+            )
+
+def _draw_hint_grid(
+    draw: ImageDraw.ImageDraw,
+    layout: Layout,
+) -> None:
+    """
+    Draw hint area grid (debug only).
+    """
+
+    cell = layout.cell_size
+
+    left = layout.puzzle_x - layout.left_hint_cells * cell
+    right = layout.puzzle_x
+
+    top = layout.puzzle_y
+    bottom = layout.puzzle_y + layout.puzzle_height
+
+    #
+    # Vertical lines
+    #
+
+    for i in range(layout.left_hint_cells + 1):
+
+        x = left + i * cell
+
+        draw.line(
+            [(x, top), (x, bottom)],
+            fill=(220, 220, 220),
+            width=1,
+        )
+
+    #
+    # Horizontal lines
+    #
+
+    rows = layout.puzzle_height // cell
+
+    for i in range(rows + 1):
+
+        y = top + i * cell
+
+        draw.line(
+            [(left, y), (right, y)],
+            fill=(220, 220, 220),
+            width=1,
+        )
+
+def _draw_hint_indexes(
+    draw: ImageDraw.ImageDraw,
+    layout: Layout,
+) -> None:
+    """
+    Draw indexes of hint cells (debug only).
+    """
+
+    cell = layout.cell_size
+
+    left = layout.puzzle_x - layout.left_hint_cells * cell
+
+    for row in range(layout.puzzle_height // cell):
+
+        y = (
+            layout.puzzle_y
+            + row * cell
+            + cell // 2
+        )
+
+        for col in range(layout.left_hint_cells):
+
+            x = (
+                left
+                + col * cell
+                + cell // 2
+            )
+
+            text = str(col)
+
+            bbox = draw.textbbox(
+                (0, 0),
+                text,
+                font=FONT,
+            )
+
+            w = bbox[2] - bbox[0]
+            h = bbox[3] - bbox[1]
+
+            draw.text(
+                (
+                    x - w // 2,
+                    y - h // 2,
+                ),
+                text,
+                fill="red",
+                font=FONT,
+            )

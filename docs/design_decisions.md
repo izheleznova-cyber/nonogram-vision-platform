@@ -16,3 +16,14 @@ Geometry отделена от Metadata.
 
 Причина:
 геометрия и экспертная разметка развиваются независимо.
+
+Renderer architecture
+
+render_puzzle()
+    ├── _draw_grid()
+    ├── _draw_row_hints()
+    ├── _draw_column_hints()
+    └── _draw_cells()
+
+Layout is responsible only for geometry.
+Renderer performs no layout calculations.
