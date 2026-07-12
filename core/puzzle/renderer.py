@@ -13,6 +13,10 @@ from .layout import Layout
 from .layout import calculate_layout
 from .model import Puzzle
 
+FONT_SIZE = 10
+
+HINT_TEXT_OFFSET_X = 2
+HINT_TEXT_OFFSET_Y = 0
 
 BACKGROUND = (255, 255, 255)
 
@@ -22,7 +26,7 @@ MAJOR_GRID_COLOR = (0, 0, 0)
 THIN_WIDTH = 1
 THICK_WIDTH = 2
 
-DEBUG_HINT_GRID = True
+DEBUG_HINT_GRID = False
 DEBUG_HINT_INDEX = False 
 
 
@@ -154,12 +158,6 @@ def _draw_row_hints(
 
     for row, hints in enumerate(puzzle.row_hints):
 
-        print(
-            row,
-            hints,
-            len(hints),
-            layout.left_hint_cells,
-        )
         #
         # Верхняя координата строки
         #
