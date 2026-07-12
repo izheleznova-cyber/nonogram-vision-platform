@@ -26,16 +26,14 @@ def main():
 
     print()
 
-    print(f"Rows    : {puzzle.rows}")
-    print(f"Columns : {puzzle.columns}")
+    print(f"Height  : {puzzle.height}")
+    print(f"Width   : {puzzle.width}")
     print(f"Colors  : {puzzle.colors}")
 
     print()
 
     print("Matrix size:")
-
     print(len(puzzle.matrix))
-
     print(len(puzzle.matrix[0]))
 
 

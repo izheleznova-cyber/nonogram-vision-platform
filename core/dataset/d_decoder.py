@@ -9,22 +9,9 @@ in nonogram.min.062.js.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from .d_header import DHeader, read_header
 
-
-@dataclass(slots=True)
-class DecodedPuzzle:
-    """
-    Decoded puzzle.
-    """
-
-    rows: int
-    columns: int
-    colors: int
-
-    matrix: list[list[int]]
+from core.puzzle.model import Puzzle
 
 
 def fill_matrix(
@@ -99,9 +86,9 @@ def decode(
         header,
     )
 
-    return DecodedPuzzle(
-        rows=header.rows,
-        columns=header.columns,
+    return Puzzle(
+        width=header.columns,
+        height=header.rows,
         colors=header.colors,
         matrix=matrix,
     )
