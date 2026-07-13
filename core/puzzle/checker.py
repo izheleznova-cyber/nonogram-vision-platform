@@ -57,3 +57,18 @@ def is_solved(
                 return False
 
     return True
+
+def checks_left(
+    session: GameSession,
+) -> int | None:
+    """
+    Number of remaining checks.
+    """
+
+    if session.settings.max_checks is None:
+        return None
+
+    return max(
+        0,
+        session.settings.max_checks - session.check_count,
+    )

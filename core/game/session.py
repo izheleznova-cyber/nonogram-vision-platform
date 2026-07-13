@@ -38,6 +38,10 @@ class GameSession:
 
     started_at: float = field(default_factory=time.time)
 
+    check_count: int = 0
+
+    last_check_time: float = 0.0
+
     def __post_init__(self) -> None:
 
         self.board = PlayerBoard.create(
@@ -187,3 +191,4 @@ class GameSession:
         """
 
         return time.time() - self.started_at
+
