@@ -64,7 +64,14 @@ def render_puzzle(
             draw,
             layout,
         )
+    
+    _draw_cells(
+    draw,
+    puzzle,
+    layout,
+    )
 
+    
     _draw_row_hints(
     draw,
     puzzle,
@@ -499,3 +506,39 @@ def _draw_coordinates(
             fill="black",
             font=FONT,
         )
+
+def _draw_cells(
+    draw: ImageDraw.ImageDraw,
+    puzzle: Puzzle,
+    layout: Layout,
+) -> None:
+    """
+    Draw filled cells.
+    """
+
+    cell = layout.cell_size
+
+    for row in range(puzzle.height):
+
+        for col in range(puzzle.width):
+
+            value = puzzle.matrix[row][col]
+
+            #
+            # 0 = empty
+            #
+            if value == 0:
+                continue
+
+            left = layout.puzzle_x + col * cell
+            top = layout.puzzle_y + row * cell
+
+            draw.rectangle(
+                (
+                    left + 1,
+                    top + 1,
+                    left + cell - 1,
+                    top + cell - 1,
+                ),
+                fill="black",
+            )
