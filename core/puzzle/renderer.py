@@ -12,8 +12,20 @@ from PIL import ImageDraw
 from .layout import Layout
 from .layout import calculate_layout
 from .model import Puzzle
+from .player import (
+    PlayerBoard, 
+    EMPTY,
+    FILLED,
+    CROSSED,
+)
 
 FONT_SIZE = 10
+
+CROSS_COLOR = (180, 0, 0)
+
+CROSS_MARGIN = 4
+
+CROSS_WIDTH = 2
 
 HINT_TEXT_OFFSET_X = 2
 HINT_TEXT_OFFSET_Y = 0
@@ -33,6 +45,7 @@ DEBUG_HINT_INDEX = False
 def render_puzzle(
     puzzle: Puzzle,
     output: Path,
+    board: PlayerBoard | None = None
 ) -> None:
     """
     Render puzzle to PNG file.
@@ -69,6 +82,7 @@ def render_puzzle(
     draw,
     puzzle,
     layout,
+    board,
     )
 
     
@@ -511,6 +525,7 @@ def _draw_cells(
     draw: ImageDraw.ImageDraw,
     puzzle: Puzzle,
     layout: Layout,
+    board: PlayerBoard | None = None,
 ) -> None:
     """
     Draw filled cells.
@@ -518,27 +533,74 @@ def _draw_cells(
 
     cell = layout.cell_size
 
+    #
+    # Choose matrix to render.
+    #
+
+    if board is None:
+
+        cells = puzzle.matrix
+
+    else:
+
+        cells = board.cells
+
     for row in range(puzzle.height):
 
         for col in range(puzzle.width):
 
-            value = puzzle.matrix[row][col]
+            value = cells[row][col]
 
             #
-            # 0 = empty
+            # Empty cell
             #
-            if value == 0:
+
+            if value == EMPTY:
                 continue
 
             left = layout.puzzle_x + col * cell
             top = layout.puzzle_y + row * cell
 
-            draw.rectangle(
-                (
-                    left + 1,
-                    top + 1,
-                    left + cell - 1,
-                    top + cell - 1,
-                ),
-                fill="black",
-            )
+            #
+            # Filled cell
+            #
+
+            if value == FILLED:
+
+                draw.rectangle(
+                    (
+                        left + 1,
+                        top + 1,
+                        left + cell - 1,
+                        top + cell - 1,
+                    ),
+                    fill="black",
+                )
+
+            #
+            # Cross
+            #
+
+            elif value == CROSSED:
+
+                draw.line(
+                    (
+                        left +  CROSS_MARGIN,
+                        top + CROSS_MARGIN,
+                        left + cell - CROSS_MARGIN,
+                        top + cell - CROSS_MARGIN,
+                    ),
+                    fill=CROSS_COLOR,
+                    width=CROSS_WIDTH,
+                )
+
+                draw.line(
+                    (
+                        left + cell - CROSS_MARGIN,
+                        top + CROSS_MARGIN,
+                        left + CROSS_MARGIN,
+                        top + cell - CROSS_MARGIN,
+                    ),
+                    fill=CROSS_COLOR,
+                    width=CROSS_WIDTH,
+                )
