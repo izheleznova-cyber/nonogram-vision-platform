@@ -1,11 +1,14 @@
 """
-Student board widget.
+Interactive board widget.
 
-Displays the current puzzle.
-Currently shows a rendered PNG.
+Current version:
+    Displays rendered PNG.
 
-Later this widget will draw the puzzle
-directly using QPainter.
+Future:
+    - Draw Puzzle using QPainter
+    - Mouse interaction
+    - Zoom
+    - Selection
 """
 
 from __future__ import annotations
@@ -13,25 +16,29 @@ from __future__ import annotations
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
-
-from PyQt6.QtGui import QPixmap
-
-from PyQt6.QtWidgets import (
-    QLabel,
-    QSizePolicy,
+from PyQt6.QtGui import (
+    QPixmap,
+    QResizeEvent,
+    QMouseEvent,
 )
+from PyQt6.QtWidgets import QLabel
+
+from core.puzzle.model import Puzzle
+from core.puzzle.player import PlayerBoard
 
 
 class BoardWidget(QLabel):
     """
     Puzzle board widget.
 
-    Current version:
-        Displays rendered PNG.
+    Stage 1
+        Display rendered PNG.
 
-    Future version:
-        Draws puzzle directly from
-        Puzzle + PlayerBoard.
+    Stage 2
+        Draw Puzzle directly.
+
+    Stage 3
+        Interactive solving.
     """
 
     def __init__(self):
@@ -42,29 +49,61 @@ class BoardWidget(QLabel):
             Qt.AlignmentFlag.AlignCenter
         )
 
-        #
-        # Allow the board to grow.
-        #
         self.setMinimumSize(
-            300,
-            300,
+            900,
+            600,
         )
 
-        self.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding,
-        )
-
-        #
-        # We keep original aspect ratio.
-        #
         self.setScaledContents(False)
 
+        #
+        # Current puzzle.
+        #
+        self._puzzle: Puzzle | None = None
+
+        #
+        # Current player board.
+        #
+        self._player: PlayerBoard | None = None
+
+        #
+        # Temporary rendered image.
+        #
         self._pixmap: QPixmap | None = None
+
+        #
+        # Future selection.
+        #
+        self.current_row: int | None = None
+        self.current_col: int | None = None
 
     # ---------------------------------------------------------
     # Public API
     # ---------------------------------------------------------
+
+    def set_puzzle(
+        self,
+        puzzle: Puzzle,
+    ) -> None:
+        """
+        Set current puzzle.
+        """
+
+        self._puzzle = puzzle
+
+        self.update()
+
+    def set_player(
+        self,
+        player: PlayerBoard,
+    ) -> None:
+        """
+        Set current player board.
+        """
+
+        self._player = player
+
+        self.update()
 
     def load_image(
         self,
@@ -72,22 +111,14 @@ class BoardWidget(QLabel):
     ) -> None:
         """
         Load rendered PNG.
+
+        Temporary until QPainter renderer
+        is implemented.
         """
 
-        self._pixmap = QPixmap(str(image))
-
-        self._update_pixmap()
-
-    # ---------------------------------------------------------
-    # Events
-    # ---------------------------------------------------------
-
-    def resizeEvent(
-        self,
-        event,
-    ) -> None:
-
-        super().resizeEvent(event)
+        self._pixmap = QPixmap(
+            str(image)
+        )
 
         self._update_pixmap()
 
@@ -95,7 +126,9 @@ class BoardWidget(QLabel):
     # Internal
     # ---------------------------------------------------------
 
-    def _update_pixmap(self) -> None:
+    def _update_pixmap(
+        self,
+    ) -> None:
 
         if self._pixmap is None:
             return
@@ -110,4 +143,41 @@ class BoardWidget(QLabel):
 
         )
 
-        self.setPixmap(scaled)
+        self.setPixmap(
+            scaled
+        )
+
+    # ---------------------------------------------------------
+    # Qt Events
+    # ---------------------------------------------------------
+
+    def resizeEvent(
+        self,
+        event: QResizeEvent,
+    ) -> None:
+
+        super().resizeEvent(event)
+
+        self._update_pixmap()
+
+    def mousePressEvent(
+        self,
+        event: QMouseEvent,
+    ) -> None:
+        """
+        Future:
+            cell selection.
+        """
+
+        super().mousePressEvent(event)
+
+    # ---------------------------------------------------------
+    # Refresh
+    # ---------------------------------------------------------
+
+    def refresh(self) -> None:
+        """
+        Refresh board.
+        """
+
+        self.update()

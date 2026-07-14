@@ -192,3 +192,18 @@ class GameSession:
 
         return time.time() - self.started_at
 
+
+    def check(
+        self,
+    ) -> None:
+        """
+        Temporary check.
+        """
+
+        self.check_count += 1
+
+        self.last_check_time = time.time()
+
+        print(
+            f"Check #{self.check_count}"
+        )
