@@ -1,89 +1,79 @@
 """
 Interactive board widget.
 
-Current version:
-    Displays rendered PNG.
-
-Future:
-    - Draw Puzzle using QPainter
-    - Mouse interaction
-    - Zoom
-    - Selection
+Step 1:
+Draw empty grid using QPainter.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import (
-    QPixmap,
-    QResizeEvent,
-    QMouseEvent,
+    QColor,
+    QPainter,
+    QPen,
 )
-from PyQt6.QtWidgets import QLabel
-
-from core.puzzle.model import Puzzle
-from core.puzzle.player import PlayerBoard
+from PyQt6.QtWidgets import QWidget
 
 
-class BoardWidget(QLabel):
+class BoardWidget(QWidget):
     """
-    Puzzle board widget.
+    Interactive puzzle board.
 
-    Stage 1
-        Display rendered PNG.
-
-    Stage 2
-        Draw Puzzle directly.
-
-    Stage 3
-        Interactive solving.
+    First version:
+    only draws an empty grid.
     """
+
+    CELL_SIZE = 20
+
+    GRID_WIDTH = 50
+    GRID_HEIGHT = 42
+
+    LEFT_MARGIN = 120
+    TOP_MARGIN = 120
 
     def __init__(self):
 
         super().__init__()
 
-        self.setAlignment(
-            Qt.AlignmentFlag.AlignCenter
-        )
+        #
+        # Current puzzle
+        #
+        self._puzzle = None
+
+        #
+        # Current player board
+        #
+        self._player = None
 
         self.setMinimumSize(
             900,
-            600,
+            700,
         )
-
-        self.setScaledContents(False)
-
-        #
-        # Current puzzle.
-        #
-        self._puzzle: Puzzle | None = None
-
-        #
-        # Current player board.
-        #
-        self._player: PlayerBoard | None = None
-
-        #
-        # Temporary rendered image.
-        #
-        self._pixmap: QPixmap | None = None
-
-        #
-        # Future selection.
-        #
-        self.current_row: int | None = None
-        self.current_col: int | None = None
 
     # ---------------------------------------------------------
     # Public API
     # ---------------------------------------------------------
 
+    # ---------------------------------------------------------
+    # Temporary compatibility
+    # ---------------------------------------------------------
+
+    def load_image(
+        self,
+        image,
+    ) -> None:
+        """
+        Temporary stub.
+
+        Needed so existing examples
+        continue to run.
+        """
+        self.update()
+
     def set_puzzle(
         self,
-        puzzle: Puzzle,
+        puzzle,
     ) -> None:
         """
         Set current puzzle.
@@ -95,7 +85,7 @@ class BoardWidget(QLabel):
 
     def set_player(
         self,
-        player: PlayerBoard,
+        player,
     ) -> None:
         """
         Set current player board.
@@ -105,79 +95,96 @@ class BoardWidget(QLabel):
 
         self.update()
 
-    def load_image(
-        self,
-        image: Path,
-    ) -> None:
-        """
-        Load rendered PNG.
-
-        Temporary until QPainter renderer
-        is implemented.
-        """
-
-        self._pixmap = QPixmap(
-            str(image)
-        )
-
-        self._update_pixmap()
-
-    # ---------------------------------------------------------
-    # Internal
-    # ---------------------------------------------------------
-
-    def _update_pixmap(
+    def refresh(
         self,
     ) -> None:
-
-        if self._pixmap is None:
-            return
-
-        scaled = self._pixmap.scaled(
-
-            self.size(),
-
-            Qt.AspectRatioMode.KeepAspectRatio,
-
-            Qt.TransformationMode.SmoothTransformation,
-
-        )
-
-        self.setPixmap(
-            scaled
-        )
-
-    # ---------------------------------------------------------
-    # Qt Events
-    # ---------------------------------------------------------
-
-    def resizeEvent(
-        self,
-        event: QResizeEvent,
-    ) -> None:
-
-        super().resizeEvent(event)
-
-        self._update_pixmap()
-
-    def mousePressEvent(
-        self,
-        event: QMouseEvent,
-    ) -> None:
-        """
-        Future:
-            cell selection.
-        """
-
-        super().mousePressEvent(event)
-
-    # ---------------------------------------------------------
-    # Refresh
-    # ---------------------------------------------------------
-
-    def refresh(self) -> None:
         """
         Refresh board.
         """
 
         self.update()
+
+    # ---------------------------------------------------------
+    # Painting
+    # ---------------------------------------------------------
+
+    def paintEvent(
+        self,
+        event,
+    ) -> None:
+
+        painter = QPainter(self)
+
+        painter.fillRect(
+            self.rect(),
+            Qt.GlobalColor.white,
+        )
+
+        self._draw_grid(painter)
+
+    # ---------------------------------------------------------
+    # Grid
+    # ---------------------------------------------------------
+
+    def _draw_grid(
+        self,
+        painter: QPainter,
+    ) -> None:
+
+        thin_pen = QPen(
+            QColor(190, 190, 190)
+        )
+        thin_pen.setWidth(1)
+
+        thick_pen = QPen(
+            Qt.GlobalColor.black
+        )
+        thick_pen.setWidth(2)
+
+        #
+        # Vertical lines
+        #
+
+        for col in range(self.GRID_WIDTH + 1):
+
+            x = (
+                self.LEFT_MARGIN
+                + col * self.CELL_SIZE
+            )
+
+            if col % 5 == 0:
+                painter.setPen(thick_pen)
+            else:
+                painter.setPen(thin_pen)
+
+            painter.drawLine(
+                x,
+                self.TOP_MARGIN,
+                x,
+                self.TOP_MARGIN
+                + self.GRID_HEIGHT * self.CELL_SIZE,
+            )
+
+        #
+        # Horizontal lines
+        #
+
+        for row in range(self.GRID_HEIGHT + 1):
+
+            y = (
+                self.TOP_MARGIN
+                + row * self.CELL_SIZE
+            )
+
+            if row % 5 == 0:
+                painter.setPen(thick_pen)
+            else:
+                painter.setPen(thin_pen)
+
+            painter.drawLine(
+                self.LEFT_MARGIN,
+                y,
+                self.LEFT_MARGIN
+                + self.GRID_WIDTH * self.CELL_SIZE,
+                y,
+            )

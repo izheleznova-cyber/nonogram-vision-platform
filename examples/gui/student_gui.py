@@ -80,7 +80,7 @@ def main() -> None:
 
     window.set_session(session)
 
-    window.board.load_image(output)
+    # window.board.load_image(output)
 
     window.show()
 
