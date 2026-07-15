@@ -114,9 +114,23 @@ class StudentGui(QWidget):
             self._check_solution
         )
 
+        #
+        # Zoom
+        #
+
+        self.toolbar.zoom_in_button.clicked.connect(
+            self.board.zoom_in
+        )
+
+        self.toolbar.zoom_out_button.clicked.connect(
+            self.board.zoom_out
+        )
+
         self.prediction.save_button.clicked.connect(
             self._save_prediction
         )
+
+        
 
 
     def set_session(

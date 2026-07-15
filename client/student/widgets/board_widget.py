@@ -39,7 +39,11 @@ class BoardWidget(QWidget):
         # Current puzzle
         #
         self._puzzle = None
+        #
+        # Current zoom
+        #
 
+        self.scale = 1.0
         #
         # Current player board
         #
@@ -49,6 +53,10 @@ class BoardWidget(QWidget):
             900,
             700,
         )
+        #
+        # View scale
+        #
+        self.scale = 1.0
 
     # ---------------------------------------------------------
     # Public API
@@ -147,7 +155,9 @@ class BoardWidget(QWidget):
 
         layout = self._layout
 
-        cell = layout.cell_size
+        cell = int(
+            layout.cell_size * self.scale
+        )
 
         left = layout.puzzle_x
         top = layout.puzzle_y
@@ -222,7 +232,9 @@ class BoardWidget(QWidget):
 
         layout = self._layout
 
-        cell = layout.cell_size
+        cell = int(
+            layout.cell_size * self.scale
+        )
 
         #
         # Левая граница области подсказок
@@ -287,7 +299,9 @@ class BoardWidget(QWidget):
 
         layout = self._layout
 
-        cell = layout.cell_size
+        cell = int(
+            layout.cell_size * self.scale
+        )
 
         #
         # Верхняя граница области подсказок
@@ -304,7 +318,7 @@ class BoardWidget(QWidget):
         # painter.setFont(font)
         # painter.setPen(Qt.GlobalColor.black)
         self._prepare_hint_painter(painter)
-        
+
         metrics = painter.fontMetrics()
 
         for col, hints in enumerate(self._puzzle.column_hints):
@@ -378,3 +392,61 @@ class BoardWidget(QWidget):
         painter.setPen(
             QColor(60, 60, 60)
         )
+
+    def zoom_in(self) -> None:
+
+        if self.scale < 3.0:
+            self.scale *= 1.25
+            self.update()
+
+
+    def zoom_out(self) -> None:
+
+        if self.scale > 0.4:
+            self.scale /= 1.25
+            self.update()
+
+
+    def zoom_reset(self) -> None:
+
+        self.scale = 1.0
+        self.update()
+
+    # ---------------------------------------------------------
+    # Zoom
+    # ---------------------------------------------------------
+
+    def zoom_in(
+        self,
+    ) -> None:
+        """
+        Increase board scale.
+        """
+
+        if self.scale < 3.0:
+
+            self.scale *= 1.25
+
+            print(
+                f"Zoom: {self.scale:.2f}"
+            )
+
+            self.update()
+
+
+    def zoom_out(
+        self,
+    ) -> None:
+        """
+        Decrease board scale.
+        """
+
+        if self.scale > 0.4:
+
+            self.scale /= 1.25
+
+            print(
+                f"Zoom: {self.scale:.2f}"
+            )
+
+            self.update()
