@@ -12,8 +12,13 @@ from PyQt6.QtGui import (
     QColor,
     QPainter,
     QPen,
+    QFont,
 )
 from PyQt6.QtWidgets import QWidget
+from core.puzzle.layout import (
+    Layout,
+    calculate_layout,
+)
 
 
 class BoardWidget(QWidget):
@@ -25,12 +30,6 @@ class BoardWidget(QWidget):
     """
 
     CELL_SIZE = 20
-
-    GRID_WIDTH = 50
-    GRID_HEIGHT = 42
-
-    LEFT_MARGIN = 120
-    TOP_MARGIN = 120
 
     def __init__(self):
 
@@ -45,7 +44,7 @@ class BoardWidget(QWidget):
         # Current player board
         #
         self._player = None
-
+        self._layout: Layout | None = None
         self.setMinimumSize(
             900,
             700,
@@ -80,6 +79,16 @@ class BoardWidget(QWidget):
         """
 
         self._puzzle = puzzle
+
+        if puzzle is not None:
+            self._layout = calculate_layout(puzzle)
+
+            print(
+                self._layout
+            )
+
+        else:
+            self._layout = None
 
         self.update()
 
@@ -121,6 +130,8 @@ class BoardWidget(QWidget):
         )
 
         self._draw_grid(painter)
+        self._draw_row_hints(painter)
+        self._draw_column_hints(painter)
 
     # ---------------------------------------------------------
     # Grid
@@ -131,6 +142,20 @@ class BoardWidget(QWidget):
         painter: QPainter,
     ) -> None:
 
+        if self._layout is None:
+            return
+
+        layout = self._layout
+
+        cell = layout.cell_size
+
+        left = layout.puzzle_x
+        top = layout.puzzle_y
+
+        columns = self._puzzle.width
+        rows = self._puzzle.height
+        
+        
         thin_pen = QPen(
             QColor(190, 190, 190)
         )
@@ -145,12 +170,9 @@ class BoardWidget(QWidget):
         # Vertical lines
         #
 
-        for col in range(self.GRID_WIDTH + 1):
+        for col in range(columns + 1):
 
-            x = (
-                self.LEFT_MARGIN
-                + col * self.CELL_SIZE
-            )
+            x = left + col * cell
 
             if col % 5 == 0:
                 painter.setPen(thick_pen)
@@ -159,22 +181,17 @@ class BoardWidget(QWidget):
 
             painter.drawLine(
                 x,
-                self.TOP_MARGIN,
+                top,
                 x,
-                self.TOP_MARGIN
-                + self.GRID_HEIGHT * self.CELL_SIZE,
+                top + rows * cell,
             )
-
         #
         # Horizontal lines
         #
 
-        for row in range(self.GRID_HEIGHT + 1):
+        for row in range(rows + 1):
 
-            y = (
-                self.TOP_MARGIN
-                + row * self.CELL_SIZE
-            )
+            y = top + row * cell
 
             if row % 5 == 0:
                 painter.setPen(thick_pen)
@@ -182,9 +199,182 @@ class BoardWidget(QWidget):
                 painter.setPen(thin_pen)
 
             painter.drawLine(
-                self.LEFT_MARGIN,
+                left,
                 y,
-                self.LEFT_MARGIN
-                + self.GRID_WIDTH * self.CELL_SIZE,
+                left + columns * cell,
                 y,
             )
+
+
+    def _draw_row_hints(
+        self,
+        painter: QPainter,
+    ) -> None:
+        """
+        Draw left row hints.
+        """
+
+        if self._layout is None:
+            return
+
+        if self._puzzle is None:
+            return
+
+        layout = self._layout
+
+        cell = layout.cell_size
+
+        #
+        # Левая граница области подсказок
+        #
+        left = (
+            layout.puzzle_x
+            - layout.left_hint_cells * cell
+        )
+
+        # font = QFont()
+        # font.setPointSize(9)
+        # font.setBold(True)
+
+        # painter.setFont(font)
+        self._prepare_hint_painter(painter)
+
+        metrics = painter.fontMetrics()
+
+        for row, hints in enumerate(self._puzzle.row_hints):
+
+            y = (
+                layout.puzzle_y
+                + row * cell
+            )
+
+            hint_count = len(hints)
+
+            start_cell = (
+                layout.left_hint_cells
+                - hint_count
+            )
+
+            for index, (length, color) in enumerate(hints):
+
+                cell_left = (
+                    left
+                    + (start_cell + index) * cell
+                )
+
+                text = str(length)
+
+                text_height = metrics.height()
+
+                painter.drawText(
+                    cell_left + 2,
+                    y + (cell + text_height) // 2 - 4,
+                    text,
+                )
+    def _draw_column_hints(
+        self,
+        painter: QPainter,
+    ) -> None:
+        """
+        Draw top column hints.
+        """
+
+        if self._layout is None:
+            return
+
+        if self._puzzle is None:
+            return
+
+        layout = self._layout
+
+        cell = layout.cell_size
+
+        #
+        # Верхняя граница области подсказок
+        #
+        top = (
+            layout.puzzle_y
+            - layout.top_hint_cells * cell
+        )
+
+        # font = QFont()
+        # font.setPointSize(9)
+        # font.setBold(True)
+
+        # painter.setFont(font)
+        # painter.setPen(Qt.GlobalColor.black)
+        self._prepare_hint_painter(painter)
+        
+        metrics = painter.fontMetrics()
+
+        for col, hints in enumerate(self._puzzle.column_hints):
+
+            #
+            # Левая координата столбца
+            #
+            x = (
+                layout.puzzle_x
+                + col * cell
+            )
+
+            hint_count = len(hints)
+
+            #
+            # Первая занятая ячейка
+            #
+            start_cell = (
+                layout.top_hint_cells
+                - hint_count
+            )
+
+            for index, (length, color) in enumerate(hints):
+
+                #
+                # Верхняя координата текущей ячейки
+                #
+                cell_top = (
+                    top
+                    + (start_cell + index) * cell
+                )
+
+                text = str(length)
+
+                rect = metrics.boundingRect(text)
+
+                text_width = rect.width()
+
+                painter.drawText(
+                    x + (cell - text_width) // 2,
+                    cell_top + (cell + metrics.ascent()) // 2,
+                    text,
+                )
+
+    def _hint_font(self) -> QFont:
+        """
+        Font used for row and column hints.
+        """
+
+        font = QFont()
+
+        font.setPointSize(9)
+
+        # Пока без жирного
+        font.setBold(False)
+
+        return font
+
+    def _prepare_hint_painter(
+        self,
+        painter: QPainter,
+    ) -> None:
+        """
+        Configure painter for hint rendering.
+        """
+
+        painter.setFont(
+            self._hint_font()
+        )
+
+        painter.setPen(
+            QColor(60, 60, 60)
+        )
