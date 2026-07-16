@@ -7,6 +7,7 @@ from __future__ import annotations
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
+    QScrollArea,
 )
 
 from .widgets.toolbar import Toolbar
@@ -48,6 +49,20 @@ class StudentGui(QWidget):
 
         self.board = BoardWidget()
 
+        #
+        # Scroll area
+        #
+
+        self.board_scroll = QScrollArea()
+
+        self.board_scroll.setWidget(
+            self.board
+        )
+
+        self.board_scroll.setWidgetResizable(
+            False
+        )
+
         self.prediction = PredictionPanel()
 
         self.status = StatusPanel()
@@ -83,7 +98,7 @@ class StudentGui(QWidget):
         # Puzzle image
         #
         layout.addWidget(
-            self.board,
+            self.board_scroll,
             stretch=1,
         )
 

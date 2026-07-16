@@ -13,6 +13,7 @@ from PyQt6.QtGui import (
     QPainter,
     QPen,
     QFont,
+    QMouseEvent,
 )
 from PyQt6.QtWidgets import QWidget
 from core.puzzle.layout import (
@@ -29,7 +30,9 @@ class BoardWidget(QWidget):
     only draws an empty grid.
     """
 
-    CELL_SIZE = 20
+    BASE_CELL_SIZE = 20
+    MIN_SCALE = 0.25
+    MAX_SCALE = 3.0
 
     def __init__(self):
 
@@ -42,9 +45,10 @@ class BoardWidget(QWidget):
         #
         # Current zoom
         #
-
-        self.scale = 1.0
+        # Rendering sizes
         #
+        self._hint_cell = 20
+
         # Current player board
         #
         self._player = None
@@ -89,8 +93,21 @@ class BoardWidget(QWidget):
         self._puzzle = puzzle
 
         if puzzle is not None:
-            self._layout = calculate_layout(puzzle)
+            self._update_layout()
 
+            self._update_widget_size()
+
+            self.update()
+            
+            self._update_widget_size()
+            self.update()
+
+            if self._layout is not None:
+
+                self.resize(
+                    self._layout.image_width,
+                    self._layout.image_height,
+                )
             print(
                 self._layout
             )
@@ -121,6 +138,57 @@ class BoardWidget(QWidget):
 
         self.update()
 
+
+    # ---------------------------------------------------------
+    # Mouse
+    # ---------------------------------------------------------
+
+    def mousePressEvent(
+        self,
+        event: QMouseEvent,
+    ) -> None:
+        """
+        Handle mouse click.
+
+        Commit 1:
+        Only determine the clicked cell.
+        """
+
+        if self._layout is None:
+            return
+
+        if self._puzzle is None:
+            return
+
+        x = event.position().x()
+        y = event.position().y()
+
+        left = self._layout.puzzle_x
+        top = self._layout.puzzle_y
+
+        cell = self._layout.cell_size
+
+        #
+        # Outside puzzle
+        #
+
+        if x < left or y < top:
+            return
+
+        col = int((x - left) // cell)
+        row = int((y - top) // cell)
+
+        if row < 0 or row >= self._puzzle.height:
+            return
+
+        if col < 0 or col >= self._puzzle.width:
+            return
+
+        print(
+            f"Clicked cell: row={row}, col={col}"
+        )
+
+
     # ---------------------------------------------------------
     # Painting
     # ---------------------------------------------------------
@@ -137,10 +205,29 @@ class BoardWidget(QWidget):
             Qt.GlobalColor.white,
         )
 
-        self._draw_grid(painter)
-        self._draw_row_hints(painter)
-        self._draw_column_hints(painter)
+        #
+        # Grid
+        #
 
+        self._draw_grid(painter)
+
+        #
+        # Hints and coordinates
+        #
+
+        if self.scale >= 0.75:
+
+            self._draw_row_hints(painter)
+
+            self._draw_column_hints(painter)
+
+            self._draw_coordinates(painter)
+
+        #
+        # Player board
+        #
+
+        # self._draw_player(painter)
     # ---------------------------------------------------------
     # Grid
     # ---------------------------------------------------------
@@ -155,9 +242,7 @@ class BoardWidget(QWidget):
 
         layout = self._layout
 
-        cell = int(
-            layout.cell_size * self.scale
-        )
+        cell = layout.cell_size
 
         left = layout.puzzle_x
         top = layout.puzzle_y
@@ -232,9 +317,7 @@ class BoardWidget(QWidget):
 
         layout = self._layout
 
-        cell = int(
-            layout.cell_size * self.scale
-        )
+        cell = layout.cell_size
 
         #
         # Левая граница области подсказок
@@ -299,9 +382,7 @@ class BoardWidget(QWidget):
 
         layout = self._layout
 
-        cell = int(
-            layout.cell_size * self.scale
-        )
+        cell = layout.cell_size
 
         #
         # Верхняя граница области подсказок
@@ -393,23 +474,45 @@ class BoardWidget(QWidget):
             QColor(60, 60, 60)
         )
 
-    def zoom_in(self) -> None:
+    def zoom_in(self):
 
-        if self.scale < 3.0:
-            self.scale *= 1.25
+        if self._board_cell < 50:
+
+            self._board_cell += 2
+
+            self._board_cell = max(
+                5,
+                int(20 * self.scale)
+            )
+
+            self._update_layout()
+
+            self.update()
+
+    def zoom_out(self):
+
+        if self._board_cell > 8:
+
+            self._board_cell -= 2
+
+            self._board_cell = max(
+                5,
+                int(20 * self.scale)
+            )
+
+            self._update_layout()
+
             self.update()
 
 
-    def zoom_out(self) -> None:
-
-        if self.scale > 0.4:
-            self.scale /= 1.25
-            self.update()
-
-
-    def zoom_reset(self) -> None:
+    def zoom_reset(self):
 
         self.scale = 1.0
+
+        self._update_layout()
+
+        self._update_widget_size()
+
         self.update()
 
     # ---------------------------------------------------------
@@ -423,9 +526,15 @@ class BoardWidget(QWidget):
         Increase board scale.
         """
 
-        if self.scale < 3.0:
+        if self.scale < self.MAX_SCALE:
 
             self.scale *= 1.25
+
+            self._update_layout()
+
+            self._update_widget_size()
+
+            self.update()
 
             print(
                 f"Zoom: {self.scale:.2f}"
@@ -441,12 +550,131 @@ class BoardWidget(QWidget):
         Decrease board scale.
         """
 
-        if self.scale > 0.4:
+        if self.scale > self.MIN_SCALE:
 
             self.scale /= 1.25
+
+            self._update_layout()
+
+            self._update_widget_size()
+
+            self.update()
 
             print(
                 f"Zoom: {self.scale:.2f}"
             )
 
             self.update()
+
+    def _update_layout(self):
+
+        if self._puzzle is None:
+            return
+
+        cell_size = max(
+            5,
+            int(self.BASE_CELL_SIZE * self.scale),
+        )
+
+        self._layout = calculate_layout(
+            self._puzzle,
+            cell_size=self._current_cell_size(),
+        )
+
+    def _update_widget_size(self):
+
+        if self._layout is None:
+            return
+
+        self.resize(
+            self._layout.image_width,
+            self._layout.image_height,
+        )
+
+
+    def _draw_coordinates(
+        self,
+        painter: QPainter,
+    ) -> None:
+        """
+        Draw coordinates every 5 cells.
+        """
+
+        if self._layout is None:
+            return
+
+        layout = self._layout
+
+        cell = layout.cell_size
+
+        left = layout.puzzle_x
+        top = layout.puzzle_y
+
+        width = self._puzzle.width
+        height = self._puzzle.height
+
+        painter.setPen(Qt.GlobalColor.black)
+
+        font = painter.font()
+        font.setPointSize(9)
+
+        painter.setFont(font)
+
+        #
+        # Bottom coordinates
+        #
+
+        y = (
+            top
+            + layout.puzzle_height
+            + 18
+        )
+
+        for col in range(5, width + 1, 5):
+
+            x = (
+                left
+                + (col - 1) * cell
+                + cell // 2
+            )
+
+            painter.drawText(
+                x - 8,
+                y,
+                str(col),
+            )
+
+        #
+        # Right coordinates
+        #
+
+        x = (
+            left
+            + layout.puzzle_width
+            + 8
+        )
+
+        for row in range(5, height + 1, 5):
+
+            y = (
+                top
+                + (row - 1) * cell
+                + cell // 2
+                + 5
+            )
+
+            painter.drawText(
+                x,
+                y,
+                str(row),
+            )
+
+    def _current_cell_size(self) -> int:
+        """
+        Current board cell size in pixels.
+        """
+
+        return max(
+            5,
+            int(self.BASE_CELL_SIZE * self.scale),
+        )
