@@ -78,3 +78,14 @@ class PlayerBoard:
         """
 
         self.cells[row][col] = EMPTY
+
+    def state(
+        self,
+        row: int,
+        col: int,
+    ) -> int:
+        """
+        Return current cell state.
+        """
+
+        return self.cells[row][col]

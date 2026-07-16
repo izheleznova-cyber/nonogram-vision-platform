@@ -13,7 +13,12 @@ import time
 from dataclasses import dataclass, field
 
 from core.puzzle.model import Puzzle
-from core.puzzle.player import PlayerBoard
+from core.puzzle.player import (
+    PlayerBoard,
+    EMPTY,
+    FILLED,
+    CROSSED,
+)
 
 from .settings import LessonSettings
 from .action import Action
@@ -112,6 +117,66 @@ class GameSession:
                 column=col,
             )
         )
+
+
+    # ---------------------------------------------------------
+    # Mouse actions
+    # ---------------------------------------------------------
+    def left_click(
+        self,
+        row: int,
+        col: int,
+    ) -> None:
+        """
+        Handle left mouse click.
+        """
+
+        state = self.board.state(
+            row,
+            col,
+        )
+
+        if state == EMPTY:
+
+            self.fill(
+                row,
+                col,
+            )
+
+        elif state == FILLED:
+
+            self.clear(
+                row,
+                col,
+            )
+
+    def right_click(
+        self,
+        row: int,
+        col: int,
+    ) -> None:
+        """
+        Handle right mouse click.
+        """
+
+        state = self.board.state(
+            row,
+            col,
+        )
+
+        if state == EMPTY:
+
+            self.cross(
+                row,
+                col,
+            )
+
+        elif state == CROSSED:
+
+            self.clear(
+                row,
+                col,
+            )
 
     # ---------------------------------------------------------
     # Statistics

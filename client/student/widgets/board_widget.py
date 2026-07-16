@@ -16,11 +16,16 @@ from PyQt6.QtGui import (
     QMouseEvent,
 )
 from PyQt6.QtWidgets import QWidget
+from core.game.session import GameSession
 from core.puzzle.layout import (
     Layout,
     calculate_layout,
 )
-
+from core.puzzle.player import (
+    PlayerBoard,
+    FILLED,
+    CROSSED,
+)
 
 class BoardWidget(QWidget):
     """
@@ -52,6 +57,10 @@ class BoardWidget(QWidget):
         # Current player board
         #
         self._player = None
+        #
+        # Current game session
+        #
+        self._session: GameSession | None = None
         self._layout: Layout | None = None
         self.setMinimumSize(
             900,
@@ -184,10 +193,23 @@ class BoardWidget(QWidget):
         if col < 0 or col >= self._puzzle.width:
             return
 
-        print(
-            f"Clicked cell: row={row}, col={col}"
-        )
+        if self._session is None:
+            return
 
+        if event.button() == Qt.MouseButton.LeftButton:
+
+            self._session.left_click(
+                row,
+                col,
+            )
+
+        elif event.button() == Qt.MouseButton.RightButton:
+
+            self._session.right_click(
+                row,
+                col,
+            )
+        self.update()
 
     # ---------------------------------------------------------
     # Painting
@@ -227,7 +249,7 @@ class BoardWidget(QWidget):
         # Player board
         #
 
-        # self._draw_player(painter)
+        self._draw_player(painter)
     # ---------------------------------------------------------
     # Grid
     # ---------------------------------------------------------
@@ -678,3 +700,104 @@ class BoardWidget(QWidget):
             5,
             int(self.BASE_CELL_SIZE * self.scale),
         )
+
+    def set_session(
+        self,
+        session: GameSession,
+    ) -> None:
+        """
+        Connect current game session.
+        """
+
+        self._session = session
+
+        self._puzzle = session.puzzle
+
+        self._player = session.board
+
+        self._update_layout()
+
+        self._update_widget_size()
+
+        self.update()
+
+    def set_session(
+        self,
+        session: GameSession,
+    ) -> None:
+        """
+        Connect current game session.
+        """
+
+        self._session = session
+
+        self._puzzle = session.puzzle
+
+        self._player = session.board
+
+        self._update_layout()
+
+        self._update_widget_size()
+
+        self.update()
+
+    def _draw_player(
+        self,
+        painter: QPainter,
+    ) -> None:
+
+        if self._layout is None:
+            return
+
+        if self._player is None:
+            return
+
+        layout = self._layout
+        cell = layout.cell_size
+
+        for row in range(self._player.height):
+
+            for col in range(self._player.width):
+
+                state = self._player.state(
+                    row,
+                    col,
+                )
+
+                x = layout.puzzle_x + col * cell
+                y = layout.puzzle_y + row * cell
+
+                if state == FILLED:
+
+                    margin = 2
+
+                    painter.fillRect(
+                        x + margin,
+                        y + margin,
+                        cell - 2 * margin,
+                        cell - 2 * margin,
+                        Qt.GlobalColor.black,
+                    )
+
+                elif state == CROSSED:
+
+                    pen = QPen(
+                        Qt.GlobalColor.darkGray,
+                        2,
+                    )
+
+                    painter.setPen(pen)
+
+                    painter.drawLine(
+                        x + 3,
+                        y + 3,
+                        x + cell - 3,
+                        y + cell - 3,
+                    )
+
+                    painter.drawLine(
+                        x + 3,
+                        y + cell - 3,
+                        x + cell - 3,
+                        y + 3,
+                    )

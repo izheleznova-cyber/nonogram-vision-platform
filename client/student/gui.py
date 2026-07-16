@@ -158,15 +158,7 @@ class StudentGui(QWidget):
 
         self.session = session
 
-        self.board.set_puzzle(
-            session.puzzle
-        )
-
-        self.board.set_player(
-            session.board
-        )
-
-        self.board.refresh()
+        self.board.set_session(session)
 
     def _check_solution(
         self,
@@ -203,3 +195,4 @@ class StudentGui(QWidget):
         print(
             self.session.predictions[-1]
         )
+
