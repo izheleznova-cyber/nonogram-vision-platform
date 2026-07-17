@@ -19,8 +19,6 @@ class LessonSettings:
 
     check_delay: float = 10.0
 
-    max_checks: int = 3
-
     max_error_ratio: float = 0.20
 
     #

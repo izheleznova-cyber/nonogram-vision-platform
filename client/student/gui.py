@@ -7,6 +7,7 @@ from __future__ import annotations
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
+    QHBoxLayout,
     QScrollArea,
 )
 
@@ -15,6 +16,7 @@ from .widgets.board_widget import BoardWidget
 from .widgets.prediction_panel import PredictionPanel
 from .widgets.status_panel import StatusPanel
 from core.game.session import GameSession
+from .widgets.preview_widget import PreviewWidget
 
 
 class StudentGui(QWidget):
@@ -39,6 +41,15 @@ class StudentGui(QWidget):
 
         self._connect_signals()
 
+        from PyQt6.QtCore import QTimer
+        self.timer = QTimer(self)
+
+        self.timer.timeout.connect(
+            self._update_status
+        )
+
+        self.timer.start(1000)
+
     # ---------------------------------------------------------
     # Widgets
     # ---------------------------------------------------------
@@ -49,6 +60,7 @@ class StudentGui(QWidget):
 
         self.board = BoardWidget()
 
+        self.preview = PreviewWidget()
         #
         # Scroll area
         #
@@ -94,11 +106,25 @@ class StudentGui(QWidget):
             self.toolbar,
         )
 
+       #
+        # Puzzle + Preview
         #
-        # Puzzle image
-        #
-        layout.addWidget(
+
+        board_layout = QHBoxLayout()
+
+        board_layout.setSpacing(10)
+
+        board_layout.addWidget(
             self.board_scroll,
+            stretch=1,
+        )
+
+        board_layout.addWidget(
+            self.preview,
+        )
+
+        layout.addLayout(
+            board_layout,
             stretch=1,
         )
 
@@ -144,21 +170,22 @@ class StudentGui(QWidget):
         self.prediction.save_button.clicked.connect(
             self._save_prediction
         )
-
-        
-
-
+  
     def set_session(
         self,
         session: GameSession,
     ) -> None:
-        """
-        Connect GameSession.
-        """
 
         self.session = session
 
         self.board.set_session(session)
+
+        self.preview.set_session(session)
+
+        self.status.set_checks(
+            0,
+            session.max_checks(),
+        )
 
     def _check_solution(
         self,
@@ -172,6 +199,12 @@ class StudentGui(QWidget):
         self.board.set_errors(
             result.incorrect_cells
         )
+
+        self.status.set_checks(
+            self.session.check_count,
+            self.session.max_checks(),
+        )
+
 
     def _save_prediction(self) -> None:
         """
@@ -194,4 +227,37 @@ class StudentGui(QWidget):
         print(
             self.session.predictions[-1]
         )
+
+    def _update_status(self) -> None:
+
+        if self.session is None:
+            return
+
+        self.status.set_time(
+            self.session.elapsed_seconds()
+        )
+
+        self.status.set_progress(
+            self.session.progress()
+        )
+
+    def progress(self) -> float:
+
+        total = 0
+        correct = 0
+
+        for row in range(self.puzzle.height):
+            for col in range(self.puzzle.width):
+
+                if self.puzzle.matrix[row][col]:
+
+                    total += 1
+
+                    if self.board.state(row, col) == FILLED:
+                        correct += 1
+
+        if total == 0:
+            return 0.0
+
+        return correct / total
 

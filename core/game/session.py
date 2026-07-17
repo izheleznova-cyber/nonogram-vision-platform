@@ -288,7 +288,7 @@ class GameSession:
         # Check limit
         #
 
-        if self.check_count >= self.settings.max_checks:
+        if self.check_count >= self.max_checks():
 
             return CheckResult(
                 solved=False,
@@ -419,7 +419,7 @@ class GameSession:
         in solved columns.
         """
         changed = False  
-        
+
         for col in range(self.puzzle.width):
 
             expected_count = 0
@@ -503,3 +503,28 @@ class GameSession:
 
             if not changed:
                 break
+
+    def max_checks(self) -> int:
+        """
+        Calculate maximum number
+        of intermediate checks.
+        """
+
+        checks = (
+            self.puzzle.width
+            * self.puzzle.height
+        ) // 25 + 1
+
+        return min(
+            checks,
+            30,
+        )
+
+    def elapsed_seconds(self) -> int:
+        """
+        Time from lesson start.
+        """
+
+        return int(
+            time.time() - self.started_at
+        )

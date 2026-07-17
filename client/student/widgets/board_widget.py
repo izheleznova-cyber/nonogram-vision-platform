@@ -224,8 +224,22 @@ class BoardWidget(QWidget):
         self,
         event,
     ) -> None:
-
+        print("Preview paint") 
         painter = QPainter(self)
+        
+        painter.fillRect(
+            self.rect(),
+            QColor(240, 240, 240),
+        )
+
+        painter.setPen(Qt.GlobalColor.red)
+        painter.drawRect(self.rect().adjusted(0, 0, -1, -1))
+
+        painter.drawText(
+            20,
+            20,
+            "PREVIEW",
+        )
 
         painter.fillRect(
             self.rect(),
