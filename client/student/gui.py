@@ -110,7 +110,7 @@ class StudentGui(QWidget):
         )
 
         #
-        # Status line
+        # Status 
         #
         layout.addWidget(
             self.status,
@@ -163,16 +163,15 @@ class StudentGui(QWidget):
     def _check_solution(
         self,
     ) -> None:
-        """
-        Check current solution.
-        """
 
         if self.session is None:
             return
 
         result = self.session.check()
 
-        print(result)
+        self.board.set_errors(
+            result.incorrect_cells
+        )
 
     def _save_prediction(self) -> None:
         """

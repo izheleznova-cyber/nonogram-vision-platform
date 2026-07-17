@@ -71,6 +71,11 @@ class BoardWidget(QWidget):
         #
         self.scale = 1.0
 
+        #
+        # Incorrect cells after last check
+        #
+        self._errors: set[tuple[int, int]] = set()
+
     # ---------------------------------------------------------
     # Public API
     # ---------------------------------------------------------
@@ -349,11 +354,6 @@ class BoardWidget(QWidget):
             - layout.left_hint_cells * cell
         )
 
-        # font = QFont()
-        # font.setPointSize(9)
-        # font.setBold(True)
-
-        # painter.setFont(font)
         self._prepare_hint_painter(painter)
 
         metrics = painter.fontMetrics()
@@ -414,12 +414,6 @@ class BoardWidget(QWidget):
             - layout.top_hint_cells * cell
         )
 
-        # font = QFont()
-        # font.setPointSize(9)
-        # font.setBold(True)
-
-        # painter.setFont(font)
-        # painter.setPen(Qt.GlobalColor.black)
         self._prepare_hint_painter(painter)
 
         metrics = painter.fontMetrics()
@@ -801,3 +795,68 @@ class BoardWidget(QWidget):
                         x + cell - 3,
                         y + 3,
                     )
+
+    def check(
+        self,
+    ) -> list[tuple[int, int]]:
+        """
+        Compare current player board
+        with the correct puzzle solution.
+        """
+
+        errors = []
+
+        for row in range(self.puzzle.height):
+
+            for col in range(self.puzzle.width):
+
+                #
+                # Expected puzzle state
+
+                #
+
+                expected_color = self.puzzle.matrix[row][col]
+
+                expected_filled = expected_color != 0
+
+
+                player_filled = (
+                    self.board.state(row, col) == FILLED
+                )
+
+                if expected_filled != player_filled:
+
+                    errors.append(
+                        (row, col)
+                    )
+                #
+                # Player state
+                #
+
+                current = (
+                    self.board.state(row, col) == FILLED
+                )
+
+                if expected != current:
+
+                    errors.append(
+                        (row, col)
+                    )
+
+        self.check_count += 1
+
+        self.last_check_time = time.time()
+
+        return errors
+
+    def set_errors(
+        self,
+        errors: list[tuple[int, int]],
+    ) -> None:
+        """
+        Show incorrect cells.
+        """
+
+        self._errors = set(errors)
+
+        self.update()

@@ -23,6 +23,7 @@ from core.puzzle.player import (
 from .settings import LessonSettings
 from .action import Action
 from .prediction import Prediction
+from .check_result import CheckResult
 
 
 @dataclass(slots=True)
@@ -42,6 +43,21 @@ class GameSession:
     predictions: list[Prediction] = field(default_factory=list)
 
     started_at: float = field(default_factory=time.time)
+
+    #
+    # Check statistics
+    #
+
+    check_count: int = 0
+
+    last_check_time: float = 0.0
+
+    def __post_init__(self) -> None:
+
+        self.board = PlayerBoard.create(
+            self.puzzle.width,
+            self.puzzle.height,
+        )
 
     check_count: int = 0
 
@@ -260,15 +276,230 @@ class GameSession:
 
     def check(
         self,
-    ) -> None:
+    ) -> CheckResult:
         """
-        Temporary check.
+        Compare current player board
+        with the correct puzzle solution.
         """
 
-        self.check_count += 1
+        errors = []
+
+        #
+        # Check limit
+        #
+
+        if self.check_count >= self.settings.max_checks:
+
+            return CheckResult(
+                solved=False,
+                error_count=0,
+                incorrect_cells=[],
+            )
+
+        for row in range(self.puzzle.height):
+
+            for col in range(self.puzzle.width):
+
+                #
+                # Expected puzzle state
+                #
+
+                expected_color = self.puzzle.matrix[row][col]
+
+                expected_filled = (
+                    expected_color != 0
+                )
+
+                #
+                # Player state
+                #
+
+                player_filled = (
+                    self.board.state(row, col)
+                    == FILLED
+                )
+
+                #
+                # Training Check
+                # Only extra filled cells are errors.
+                #
+
+                if (
+                    player_filled
+                    and
+                    not expected_filled
+                ):
+
+                    errors.append(
+                        (row, col)
+                    )
 
         self.last_check_time = time.time()
+        self.check_count += 1
 
-        print(
-            f"Check #{self.check_count}"
+        self.auto_complete()
+
+        return CheckResult(
+            solved=(len(errors) == 0),
+            error_count=len(errors),
+            incorrect_cells=errors,
         )
+
+    def complete_solved_lines(self) -> bool:
+        """
+        Automatically cross empty cells
+        in solved rows.
+        """
+        changed = False 
+
+        for row in range(self.puzzle.height):
+
+            expected_count = 0
+            player_count = 0
+
+            solved = True
+
+            for col in range(self.puzzle.width):
+
+                expected = (
+                    self.puzzle.matrix[row][col] != 0
+                )
+
+                player = (
+                    self.board.state(row, col)
+                    == FILLED
+                )
+
+                if expected:
+                    expected_count += 1
+
+                if player:
+                    player_count += 1
+
+                #
+                # Игрок закрасил лишнюю клетку
+                #
+
+                if player and not expected:
+                    solved = False
+                    break
+
+            #
+            # Все нужные клетки уже закрашены
+            #
+
+            if not solved:
+                continue
+
+            if player_count != expected_count:
+                continue
+
+            #
+            # Остальные клетки становятся крестиками
+            #
+
+            for col in range(self.puzzle.width):
+
+                if self.board.state(row, col) == EMPTY:
+
+                    self.board.cross(
+                        row,
+                        col,
+                    )
+
+                    changed = True
+
+        return changed
+
+    def complete_solved_columns(
+        self,
+    ) -> bool:
+        """
+        Automatically cross empty cells
+        in solved columns.
+        """
+        changed = False  
+        
+        for col in range(self.puzzle.width):
+
+            expected_count = 0
+            player_count = 0
+
+            solved = True
+
+            for row in range(self.puzzle.height):
+
+                expected = (
+                    self.puzzle.matrix[row][col] != 0
+                )
+
+                player = (
+                    self.board.state(row, col)
+                    == FILLED
+                )
+
+                #
+                # Count filled cells
+                #
+
+                if expected:
+                    expected_count += 1
+
+                if player:
+                    player_count += 1
+
+                #
+                # Extra filled cell
+                #
+
+                if player and not expected:
+                    solved = False
+                    break
+
+            #
+            # Column is not solved yet
+            #
+
+            if not solved:
+                continue
+
+            if player_count != expected_count:
+                continue
+
+            #
+            # Cross remaining empty cells
+            #
+
+            for row in range(self.puzzle.height):
+
+                if (
+                    self.board.state(row, col)
+                    == EMPTY
+                ):
+
+                    self.board.cross(
+                        row,
+                        col,
+                    )
+                    changed = True
+
+        return changed
+
+    def auto_complete(
+        self,
+    ) -> None:
+        """
+        Repeat automatic completion
+        until nothing changes.
+        """
+
+        while True:
+
+            changed = False
+
+            changed |= self.complete_solved_lines()
+
+            changed |= self.complete_solved_columns()
+
+            if not changed:
+                break
