@@ -1,42 +1,79 @@
 """
 passport_reader.py
 
-Чтение паспортов японских кроссвордов из Excel.
-
-Модуль преобразует книгу nonogram_passports.xlsm
-в список объектов PassportRecord.
-
-Никакой другой обработки здесь не выполняется.
+Read passport records from Excel workbook.
 """
+
+from __future__ import annotations
 
 from pathlib import Path
 
 from openpyxl import load_workbook
+from openpyxl.worksheet.worksheet import Worksheet
 
-from core.dataset.excel_schema import (
-    FIRST_PASSPORT_SHEET,
-    PassportCells,
-)
-from core.dataset.nonograms_url import (
-    get_page_id,
-    get_source,
-)
+from core.dataset.nonograms_url import get_page_id
+from core.dataset.nonograms_url import get_source
 from core.dataset.passport_record import PassportRecord
 
 
-def read_passports(workbook_path: Path) -> list[PassportRecord]:
+def _read_fields(sheet: Worksheet) -> dict[str, str]:
     """
-    Считывает все паспорта из Excel-книги.
+    Read passport fields from columns J-K.
+    """
 
-    Parameters
-    ----------
-    workbook_path : Path
-        Путь к файлу nonogram_passports.xlsm.
+    fields: dict[str, str] = {}
 
-    Returns
-    -------
-    list[PassportRecord]
-        Список паспортов.
+    row = 3
+
+    while True:
+
+        key = sheet[f"J{row}"].value
+
+        if key is None:
+            break
+
+        value = sheet[f"K{row}"].value
+
+        fields[str(key).strip()] = (
+            "" if value is None else str(value).strip()
+        )
+
+        row += 1
+
+    return fields
+
+
+def _to_int(value: str | None) -> int:
+    """
+    Safe conversion to int.
+    Empty values become zero.
+    """
+
+    if value in (None, ""):
+        return 0
+
+    return int(value)
+
+def _to_list(value: str | None) -> list[str]:
+    """
+    Split comma-separated values.
+    """
+
+    if not value:
+        return []
+
+    return [
+        item.strip()
+        for item in value.split(",")
+        if item.strip()
+    ] 
+
+
+def read_passports(
+    workbook_path: Path,
+) -> list[PassportRecord]:
+    """
+    Read all passport sheets from workbook.
     """
 
     workbook = load_workbook(
@@ -46,28 +83,67 @@ def read_passports(workbook_path: Path) -> list[PassportRecord]:
 
     passports: list[PassportRecord] = []
 
-    worksheets = workbook.worksheets
+    # ------------------------------------------------------------------
+    # Первые четыре листа служебные:
+    #
+    #   Dictionary
+    #   Оглавление
+    #   000
+    #   идеи курса
+    #
+    # Паспорта начинаются с пятого листа.
+    # ------------------------------------------------------------------
 
-    for sheet in worksheets[FIRST_PASSPORT_SHEET - 1:]:
+    for sheet in workbook.worksheets[4:]:
 
-        url = sheet[PassportCells.URL].value
+        url = sheet["B2"].value
 
         if url is None:
             continue
 
         url = str(url).strip()
 
-        color_type = sheet[PassportCells.COLOR_TYPE].value
+        if not url.startswith("http"):
+            raise ValueError(
+                f"{sheet.title}: invalid URL: {url!r}"
+            )
 
-        if color_type is None:
-            color_type = ""
+        fields = _read_fields(sheet)
 
         passport = PassportRecord(
+
             worksheet_name=sheet.title,
-            url=url,
+
+            id=fields.get("ID", ""),
+
+            width=_to_int(fields.get("Width")),
+            height=_to_int(fields.get("Height")),
+            pixel_count=_to_int(fields.get("PixelCount")),
+
+            category=fields.get("Category", ""),
+            subcategory=fields.get("Subcategory", ""),
+
+            title=fields.get("Title", ""),
+            synonyms=_to_list(fields.get("Synonyms")),
+            author_title=fields.get("AuthorTitle", ""),
+
             source=get_source(url),
+            url=url,
             page_id=get_page_id(url),
-            color_type=str(color_type).strip(),
+
+            difficulty=_to_int(fields.get("Difficulty pic")),
+            subject=fields.get("Sujet", ""),
+            recognition_level=fields.get("RecognitionLevel", ""),
+
+            has_face=fields.get("HasFace", "").lower() == "yes",
+            face_size=fields.get("FaceSize", ""),
+            orientation=fields.get("Orientation", ""),
+
+            emotion=fields.get("Emotion", "").lower() == "yes",
+            context=fields.get("Context", "").lower() == "yes",
+            color=fields.get("Color", ""),
+
+            uncertainty=fields.get("Uncertainty recognize", ""),
         )
 
         passports.append(passport)
