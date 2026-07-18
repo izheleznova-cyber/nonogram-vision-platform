@@ -3,7 +3,7 @@ paths.py
 
 Единое описание структуры проекта и датасета.
 
-Проект предполагает следующую структуру каталогов:
+Структура:
 
 cv-projects/
 │
@@ -12,13 +12,14 @@ cv-projects/
 └── nonogram-dataset/
     ├── source/
     ├── html/
+    │   ├── nonograms/
+    │   └── nonograms2/
     ├── json/
+    │   ├── bw/
+    │   └── color/
     ├── cache/
     ├── preview/
     └── backups/
-
-Все остальные модули должны использовать пути только
-через этот файл.
 """
 
 from pathlib import Path
@@ -41,7 +42,7 @@ DATASET_ROOT = PROJECT_ROOT.parent / "nonogram-dataset"
 
 
 # =============================================================================
-# Source data
+# Source
 # =============================================================================
 
 SOURCE_DIR = DATASET_ROOT / "source"
@@ -52,7 +53,7 @@ IMAGES_DIR = SOURCE_DIR / "images"
 
 
 # =============================================================================
-# HTML cache
+# HTML
 # =============================================================================
 
 HTML_DIR = DATASET_ROOT / "html"
@@ -63,7 +64,7 @@ NONOGRAMS2_HTML_DIR = HTML_DIR / "nonograms2"
 
 
 # =============================================================================
-# JSON database
+# JSON
 # =============================================================================
 
 JSON_DIR = DATASET_ROOT / "json"
@@ -74,7 +75,7 @@ COLOR_JSON_DIR = JSON_DIR / "color"
 
 
 # =============================================================================
-# Other directories
+# Other folders
 # =============================================================================
 
 CACHE_DIR = DATASET_ROOT / "cache"
@@ -85,7 +86,7 @@ BACKUPS_DIR = DATASET_ROOT / "backups"
 
 
 # =============================================================================
-# Helper functions
+# Helpers
 # =============================================================================
 
 def get_html_path(source: str, page_id: int) -> Path:
@@ -94,24 +95,15 @@ def get_html_path(source: str, page_id: int) -> Path:
 
     Parameters
     ----------
-    source : str
-        Источник ("nonograms" или "nonograms2").
+    source
+        "nonograms" или "nonograms2"
 
-    page_id : int
+    page_id
         Идентификатор страницы.
 
     Returns
     -------
     Path
-        Полный путь к HTML-файлу.
-
-    Examples
-    --------
-    >>> get_html_path("nonograms", 16323)
-    .../html/nonograms/16323.html
-
-    >>> get_html_path("nonograms2", 14596)
-    .../html/nonograms2/14596.html
     """
 
     if source == "nonograms":
