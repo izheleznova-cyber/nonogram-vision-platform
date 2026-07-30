@@ -528,3 +528,99 @@ class GameSession:
         return int(
             time.time() - self.started_at
         )
+
+    # ---------------------------------------------------------
+    # Completed hints
+    # ---------------------------------------------------------
+
+    def _runs(
+        self,
+        states: list[int],
+    ) -> list[int]:
+        """
+        Convert player states into filled run lengths.
+
+        Example:
+
+        XX###XX##X
+
+        -> [3,2,1]
+        """
+
+        runs: list[int] = []
+
+        current = 0
+
+        for state in states:
+
+            if state == FILLED:
+
+                current += 1
+
+            else:
+
+                if current:
+
+                    runs.append(current)
+
+                    current = 0
+
+        if current:
+
+            runs.append(current)
+
+        return runs
+
+    def completed_row_hints(
+        self,
+        row: int,
+    ) -> list[bool]:
+        """
+        Return completed hints for one row.
+        """
+
+        expected = [
+            length
+            for length, _color
+            in self.puzzle.row_hints[row]
+        ]
+
+        player = self._runs(
+            [
+                self.board.state(row, col)
+                for col in range(self.puzzle.width)
+            ]
+        )
+
+        if player != expected:
+
+            return [False] * len(expected)
+
+        return [True] * len(expected)
+
+    def completed_column_hints(
+        self,
+        col: int,
+    ) -> list[bool]:
+        """
+        Return completed hints for one column.
+        """
+
+        expected = [
+            length
+            for length, _color
+            in self.puzzle.column_hints[col]
+        ]
+
+        player = self._runs(
+            [
+                self.board.state(row, col)
+                for row in range(self.puzzle.height)
+            ]
+        )
+
+        if player != expected:
+
+            return [False] * len(expected)
+
+        return [True] * len(expected)

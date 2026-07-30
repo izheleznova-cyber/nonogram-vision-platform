@@ -3,9 +3,6 @@ from dataclasses import dataclass
 
 @dataclass
 class Puzzle:
-    """
-    Internal puzzle model.
-    """
 
     width: int
     height: int
@@ -16,3 +13,6 @@ class Puzzle:
 
     row_hints: list | None = None
     column_hints: list | None = None
+
+    row_runs: list | None = None
+    column_runs: list | None = None

@@ -386,6 +386,12 @@ class BoardWidget(QWidget):
                 - hint_count
             )
 
+            completed = (
+                self._session.completed_row_hints(row)
+                if self._session is not None
+                else [False] * len(hints)
+            )
+
             for index, (length, color) in enumerate(hints):
 
                 cell_left = (
@@ -402,6 +408,8 @@ class BoardWidget(QWidget):
                     y + (cell + text_height) // 2 - 4,
                     text,
                 )
+
+
     def _draw_column_hints(
         self,
         painter: QPainter,
