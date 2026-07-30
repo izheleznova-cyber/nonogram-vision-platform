@@ -10,7 +10,12 @@ can be crossed out automatically.
 from __future__ import annotations
 
 from core.puzzle.model import Puzzle
-from core.puzzle.player import PlayerBoard
+from core.puzzle.player import (
+    PlayerBoard,
+    EMPTY,
+    FILLED,
+    CROSSED,
+)
 
 from .player_runs import (
     player_row_runs,
@@ -113,6 +118,105 @@ def _match_run(
             return False
 
     return True
+
+def _scan_row_left_to_right(
+    puzzle: Puzzle,
+    board: PlayerBoard,
+    row: int,
+) -> list[bool]:
+    """
+    PASS 1.
+    Scan one row from left to right.
+    """
+
+    hints = puzzle.row_runs[row]
+    completed = [False] * len(hints)
+
+    hint = 0
+    col = 0
+
+    while col < puzzle.width:
+
+        #
+        # Начало текущей группы.
+        #
+        start = col
+        value = board.state(row, col)
+        error = False
+
+        #
+        # Пройти всю группу одинаковых клеток.
+        #
+        while (
+            col < puzzle.width
+            and board.state(row, col) == value
+        ):
+
+            player = board.state(row, col)
+            solution = puzzle.matrix[row][col]
+
+            #
+            # Player filled a cell that should be empty.
+            #
+            if (
+                player == FILLED
+                and solution == 0
+            ):
+                error = True
+
+            col += 1
+
+        #
+        # Если группа содержит ошибку,
+        # прекращаем анализ строки.
+        #
+        if error:
+            break
+
+        length = col - start
+
+        #
+        # Пропускаем пустые группы.
+        #
+        if value != FILLED:
+            continue
+
+        #
+        # Закончились подсказки.
+        #
+        if hint >= len(hints):
+            break
+
+        #
+        # Длина текущей подсказки.
+        #
+        _, hint_length = hints[hint]
+
+        #
+        # Совпала длина группы.
+        #
+        if length == hint_length:
+
+            #
+            # Two neighbouring hints
+            # have the same length.
+            #
+            if (
+                hint < len(hints) - 1
+                and hints[hint + 1][1] == hint_length
+                and col < puzzle.width
+                and board.state(row, col) != EMPTY
+            ):
+                break
+
+            completed[hint] = True
+            hint += 1
+
+        else:
+            break
+
+    return completed
+
 
 
 def analyse_row_debug(
