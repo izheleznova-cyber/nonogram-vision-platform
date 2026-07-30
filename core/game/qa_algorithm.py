@@ -119,6 +119,26 @@ def _match_run(
 
     return True
 
+def _apply_completed_hint(
+    puzzle: Puzzle,
+    board: PlayerBoard,
+    completed: list[bool],
+    row: int,
+    hint: int,
+) -> None:
+    """
+    Logical equivalent of JavaScript Qa().J().
+
+    For now:
+        - marks the clue as completed.
+
+    Later:
+        - crosses cells around completed clues;
+        - auto-crosses empty cells when all clues are completed.
+    """
+
+    completed[hint] = True
+
 def _scan_row_left_to_right(
     puzzle: Puzzle,
     board: PlayerBoard,
@@ -209,7 +229,19 @@ def _scan_row_left_to_right(
             ):
                 break
 
-            completed[hint] = True
+            _apply_completed_hint(
+                puzzle,
+                board,
+                completed,
+                row,
+                hint,
+            )
+
+            #
+            # TODO:
+            # Qa(): J(hint, row, True, True)
+            # Automatic crossing will be implemented later.
+            #
             hint += 1
 
         else:
