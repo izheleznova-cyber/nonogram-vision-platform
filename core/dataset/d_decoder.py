@@ -12,7 +12,14 @@ from __future__ import annotations
 from .d_header import DHeader, read_header
 
 from core.puzzle.hints import generate_hints
+
+from core.puzzle.hints import generate_hints
+from core.puzzle.runs import (
+    matrix_runs,
+    column_runs,
+)
 from core.puzzle.model import Puzzle
+
 
 
 def fill_matrix(
@@ -90,6 +97,10 @@ def decode(
     # Генерация подсказок
     row_hints, column_hints = generate_hints(matrix)
 
+    # Кэш непрерывных серий
+    row_runs = matrix_runs(matrix)
+    col_runs = column_runs(matrix)
+
     return Puzzle(
         width=header.columns,
         height=header.rows,
@@ -97,4 +108,6 @@ def decode(
         matrix=matrix,
         row_hints=row_hints,
         column_hints=column_hints,
+        row_runs=row_runs,
+        column_runs=col_runs,
     )

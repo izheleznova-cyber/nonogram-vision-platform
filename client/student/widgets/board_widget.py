@@ -27,6 +27,11 @@ from core.puzzle.player import (
     CROSSED,
 )
 
+from core.game.completed_hints import (
+    completed_row_hints,
+    completed_column_hints,
+)
+
 class BoardWidget(QWidget):
     """
     Interactive puzzle board.
@@ -61,7 +66,13 @@ class BoardWidget(QWidget):
         # Current game session
         #
         self._session: GameSession | None = None
+        
+        self._completed_row_hints = []
+        self._completed_column_hints = [] 
+
+
         self._layout: Layout | None = None
+
         self.setMinimumSize(
             900,
             700,
@@ -75,6 +86,8 @@ class BoardWidget(QWidget):
         # Incorrect cells after last check
         #
         self._errors: set[tuple[int, int]] = set()
+        self._completed_row_hints: list[list[bool]] = []
+        self._completed_column_hints: list[list[bool]] = []
 
     # ---------------------------------------------------------
     # Public API
@@ -152,6 +165,14 @@ class BoardWidget(QWidget):
 
         self.update()
 
+    def _after_move(self) -> None:
+        """
+        Update widget after player move.
+        """
+
+        self.update_completed_hints()
+
+        self.update()
 
     # ---------------------------------------------------------
     # Mouse
@@ -207,6 +228,8 @@ class BoardWidget(QWidget):
                 row,
                 col,
             )
+            
+            self._after_move()
 
         elif event.button() == Qt.MouseButton.RightButton:
 
@@ -214,6 +237,9 @@ class BoardWidget(QWidget):
                 row,
                 col,
             )
+
+            self._after_move()
+
         self.update()
 
     # ---------------------------------------------------------
@@ -224,7 +250,7 @@ class BoardWidget(QWidget):
         self,
         event,
     ) -> None:
-        print("Preview paint") 
+         
         painter = QPainter(self)
         
         painter.fillRect(
@@ -387,7 +413,7 @@ class BoardWidget(QWidget):
             )
 
             completed = (
-                self._session.completed_row_hints(row)
+                self._completed_row_hints[row]
                 if self._session is not None
                 else [False] * len(hints)
             )
@@ -409,7 +435,20 @@ class BoardWidget(QWidget):
                     text,
                 )
 
+                #
+                # Strike completed hint
+                #
+                if completed[index]:
 
+                    line_y = y + cell // 2
+
+                    painter.drawLine(
+                        cell_left + 2,
+                        line_y,
+                        cell_left + cell - 2,
+                        line_y,
+                    )
+        
     def _draw_column_hints(
         self,
         painter: QPainter,
@@ -451,6 +490,13 @@ class BoardWidget(QWidget):
             )
 
             hint_count = len(hints)
+            
+            completed = (
+                self._completed_column_hints[col]
+                if self._session is not None
+                else [False] * len(hints)
+            )
+
 
             #
             # Первая занятая ячейка
@@ -481,6 +527,20 @@ class BoardWidget(QWidget):
                     cell_top + (cell + metrics.ascent()) // 2,
                     text,
                 )
+
+                #
+                # Strike completed hint
+                #
+                if completed[index]:
+
+                    line_y = cell_top + cell // 2
+
+                    painter.drawLine(
+                        x + 2,
+                        line_y,
+                        x + cell - 2,
+                        line_y,
+                    )
 
     def _hint_font(self) -> QFont:
         """
@@ -727,25 +787,15 @@ class BoardWidget(QWidget):
 
         self._session = session
 
-        self._puzzle = session.puzzle
+        self._completed_row_hints = [
+            [False] * len(hints)
+            for hints in session.puzzle.row_hints
+        ]
 
-        self._player = session.board
-
-        self._update_layout()
-
-        self._update_widget_size()
-
-        self.update()
-
-    def set_session(
-        self,
-        session: GameSession,
-    ) -> None:
-        """
-        Connect current game session.
-        """
-
-        self._session = session
+        self._completed_column_hints = [
+            [False] * len(hints)
+            for hints in session.puzzle.column_hints
+        ]
 
         self._puzzle = session.puzzle
 
@@ -755,7 +805,39 @@ class BoardWidget(QWidget):
 
         self._update_widget_size()
 
+        self.update_completed_hints()
+        
         self.update()
+
+        
+    def update_completed_hints(self) -> None:
+        """
+        Update completed row and column hints.
+        """
+
+        if self._session is None:
+            return
+
+        puzzle = self._session.puzzle
+        board = self._session.board
+
+        self._completed_row_hints = [
+            completed_row_hints(
+                puzzle,
+                board,
+                row,
+            )
+            for row in range(puzzle.height)
+        ]
+
+        self._completed_column_hints = [
+            completed_column_hints(
+                puzzle,
+                board,
+                col,
+            )
+            for col in range(puzzle.width)
+        ]
 
     def _draw_player(
         self,

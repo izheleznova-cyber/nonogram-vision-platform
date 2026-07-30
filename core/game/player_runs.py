@@ -86,4 +86,4 @@ def player_column_runs(
     if start is not None:
         runs.append((start, length))
 
-    return runs    
+    return runs
