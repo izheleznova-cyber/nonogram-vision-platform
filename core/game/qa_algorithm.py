@@ -136,7 +136,8 @@ def _apply_completed_hint(
         - crosses cells around completed clues;
         - auto-crosses empty cells when all clues are completed.
     """
-
+    
+ 
     completed[hint] = True
 
 def _auto_cross_completed_line(
@@ -487,15 +488,71 @@ def _scan_row_right_to_left(
 def _scan_column_bottom_to_top(
     puzzle: Puzzle,
     board: PlayerBoard,
-    col: int,
+    column: int,
 ) -> list[bool]:
-    """
-    PASS 4.
 
-    Scan one column from bottom to top.
-    """
+    hints = puzzle.column_runs[column]
 
-    raise NotImplementedError
+    completed = [False] * len(hints)
+
+    if not hints:
+        return completed
+
+    hint = len(hints) - 1
+    row = puzzle.height - 1
+
+    while row >= 0:
+
+        end = row
+        value = board.state(row, column)
+
+        while (
+            row >= 0
+            and board.state(row, column) == value
+        ):
+            row -= 1
+
+        length = end - row
+
+        if value != FILLED:
+            continue
+
+        if hint < 0:
+            break
+
+        _, hint_length = hints[hint]
+
+        if length == hint_length:
+
+            if (
+                hint > 0
+                and hints[hint - 1][1] == hint_length
+                and row >= 0
+                and board.state(row, column) != EMPTY
+            ):
+                break
+
+            _apply_completed_hint(
+                puzzle,
+                board,
+                completed,
+                row,
+                hint,
+                
+            )
+
+            hint -= 1
+
+        else:
+            break
+
+    _auto_cross_completed_column(
+        board,
+        completed,
+        column,
+    )
+
+    return completed
 
 def analyse(
     puzzle: Puzzle,
@@ -531,7 +588,25 @@ def analyse(
             board,
             col,
         )
+    #
+    # PASS 3
+    #
+    for row in range(puzzle.height):
+        _scan_row_right_to_left(
+            puzzle,
+            board,
+            row,
+        )
 
+    #
+    # PASS 4
+    #
+    for col in range(puzzle.width):
+        _scan_column_bottom_to_top(
+            puzzle,
+            board,
+            col,
+        )
     return changed
     
 def analyse_row_debug(
