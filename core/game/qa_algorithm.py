@@ -184,6 +184,22 @@ def _auto_cross_completed_line(
                 col,
             )
 
+def _auto_cross_completed_column(
+    board: PlayerBoard,
+    completed: list[bool],
+    col: int,
+) -> None:
+    """
+    Cross every remaining EMPTY cell in a completed column.
+    """
+
+    if not all(completed):
+        return
+
+    for row in range(board.height):
+        if board.state(row, col) == EMPTY:
+            board.cross(row, col)
+
 
 def _scan_row_left_to_right(
     puzzle: Puzzle,
@@ -301,8 +317,118 @@ def _scan_row_left_to_right(
 
     return completed
 
+def _scan_column_top_to_bottom(
+    puzzle: Puzzle,
+    board: PlayerBoard,
+    col: int,
+) -> list[bool]:
+    """
+    PASS 2.
+    Scan one column from top to bottom.
+    """
 
+    hints = puzzle.column_runs[col]
+    completed = [False] * len(hints)
 
+    hint = 0
+    row = 0
+
+    while row < puzzle.height:
+
+        #
+        # Beginning of current group.
+        #
+        start = row
+        value = board.state(row, col)
+        error = False
+
+        #
+        # Walk through the whole group.
+        #
+        while (
+            row < puzzle.height
+            and board.state(row, col) == value
+        ):
+
+            player = board.state(row, col)
+            solution = puzzle.matrix[row][col]
+
+            #
+            # Player filled a cell that should be empty.
+            #
+            if (
+                player == FILLED
+                and solution == 0
+            ):
+                error = True
+
+            row += 1
+
+        #
+        # Stop analysing this column
+        # if the group contains an error.
+        #
+        if error:
+            break
+
+        length = row - start
+
+        #
+        # Skip empty groups.
+        #
+        if value != FILLED:
+            continue
+
+        #
+        # No more hints.
+        #
+        if hint >= len(hints):
+            break
+
+        #
+        # Current hint length.
+        #
+        _, hint_length = hints[hint]
+
+        #
+        # Group length matches hint.
+        #
+        if length == hint_length:
+
+            #
+            # Two neighbouring hints
+            # have the same length.
+            #
+            if (
+                hint < len(hints) - 1
+                and hints[hint + 1][1] == hint_length
+                and row < puzzle.height
+                and board.state(row, col) != EMPTY
+            ):
+                break
+
+            _apply_completed_hint(
+                puzzle,
+                board,
+                completed,
+                col,
+                hint,
+            )
+
+            hint += 1
+
+        else:
+            break
+
+    _auto_cross_completed_column(
+        board,
+        completed,
+        col,
+    )
+
+    return completed
+
+    
 def analyse_row_debug(
     puzzle: Puzzle,
     board: PlayerBoard,
