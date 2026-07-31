@@ -139,6 +139,52 @@ def _apply_completed_hint(
 
     completed[hint] = True
 
+def _auto_cross_completed_line(
+    board: PlayerBoard,
+    completed: list[bool],
+    row: int,
+) -> None:
+    """
+    If every clue in the row has been completed,
+    automatically cross all remaining empty cells.
+    """
+
+    if not all(completed):
+        return
+
+    for col in range(board.width):
+
+        if board.state(row, col) == EMPTY:
+            board.cross(
+                row,
+                col,
+            )
+
+
+def _auto_cross_completed_line(
+    board: PlayerBoard,
+    completed: list[bool],
+    row: int,
+) -> None:
+    """
+    Equivalent of the final part of JavaScript J().
+
+    If every clue in the row has been completed,
+    automatically cross all remaining empty cells.
+    """
+
+    if not all(completed):
+        return
+
+    for col in range(board.width):
+
+        if board.state(row, col) == EMPTY:
+            board.cross(
+                row,
+                col,
+            )
+
+
 def _scan_row_left_to_right(
     puzzle: Puzzle,
     board: PlayerBoard,
@@ -246,6 +292,12 @@ def _scan_row_left_to_right(
 
         else:
             break
+
+    _auto_cross_completed_line(
+        board,
+        completed,
+        row,
+    )
 
     return completed
 

@@ -14,6 +14,9 @@ from core.dataset.d_decoder import decode
 from core.dataset.paths import CACHE_DIR
 from core.puzzle.player import (
     PlayerBoard,
+    EMPTY,
+    FILLED,
+    CROSSED,
 )
 
 from core.game.player_runs import (
@@ -68,15 +71,31 @@ def print_row(puzzle, board, row):
 
     print()
 
-    print("Completed:")
+    completed = _scan_row_left_to_right(
+        puzzle,
+        board,
+        row,
+    )
+
+    symbols = {
+        EMPTY: ".",
+        FILLED: "#",
+        CROSSED: "x",
+    }
+
+    print()
+    print("Board after scan:")
 
     print(
-        _scan_row_left_to_right(
-            puzzle,
-            board,
-            row,
+        "".join(
+            symbols[board.state(row, col)]
+            for col in range(board.width)
         )
     )
+
+    print()
+    print("Completed:")
+    print(completed)
 
 
 def main():
