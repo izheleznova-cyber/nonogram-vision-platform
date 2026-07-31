@@ -125,7 +125,7 @@ def _apply_completed_hint(
     completed: list[bool],
     row: int,
     hint: int,
-) -> None:
+) -> bool:
     """
     Logical equivalent of JavaScript Qa().J().
 
@@ -137,31 +137,43 @@ def _apply_completed_hint(
         - auto-crosses empty cells when all clues are completed.
     """
     
- 
+    if completed[hint]:
+        return False
+
     completed[hint] = True
+
+    return True
 
 def _auto_cross_completed_line(
     board: PlayerBoard,
     completed: list[bool],
     row: int,
-) -> None:
+) -> bool:
 
     if not all(completed):
-        return
+        return False
+    
+    changed = False
 
     for col in range(board.width):
+
         if board.state(row, col) == EMPTY:
+            
             board.cross(
                 row,
                 col,
             )
+
+            changed = True
+
+    return changed
 
 
 def _auto_cross_completed_column(
     board: PlayerBoard,
     completed: list[bool],
     col: int,
-) -> None:
+) -> bool:
     """
     Equivalent of the final part of JavaScript J().
 
@@ -170,7 +182,9 @@ def _auto_cross_completed_column(
     """
 
     if not all(completed):
-        return
+        return False
+
+    changed = False
 
     for row in range(board.height):
         if board.state(row, col) == EMPTY:
@@ -178,6 +192,10 @@ def _auto_cross_completed_column(
                 row,
                 col,
             )
+            changed = True
+
+    return changed
+
 
 def _scan_row_left_to_right(
     puzzle: Puzzle,
@@ -191,6 +209,9 @@ def _scan_row_left_to_right(
 
     hints = puzzle.row_runs[row]
     completed = [False] * len(hints)
+    
+    changed = False
+
 
     hint = 0
     col = 0
@@ -269,7 +290,7 @@ def _scan_row_left_to_right(
             ):
                 break
 
-            _apply_completed_hint(
+            changed |= _apply_completed_hint(
                 puzzle,
                 board,
                 completed,
@@ -287,7 +308,7 @@ def _scan_row_left_to_right(
         else:
             break
 
-    _auto_cross_completed_line(
+    changed |= _auto_cross_completed_line(
         board,
         completed,
         row,
