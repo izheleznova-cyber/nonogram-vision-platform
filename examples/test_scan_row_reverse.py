@@ -11,6 +11,7 @@ from pathlib import Path
 from core.dataset.d_parser import load_d
 from core.dataset.d_decoder import decode
 from core.dataset.paths import CACHE_DIR
+from core.game.qa_algorithm import _scan_row_right_to_left
 
 from core.puzzle.player import (
     PlayerBoard,
@@ -73,7 +74,7 @@ def print_row(puzzle, board, row):
 
     print()
 
-    completed = _scan_row_left_to_right(
+    completed = _scan_row_right_to_left(
         puzzle,
         board,
         row,

@@ -144,45 +144,17 @@ def _auto_cross_completed_line(
     completed: list[bool],
     row: int,
 ) -> None:
-    """
-    If every clue in the row has been completed,
-    automatically cross all remaining empty cells.
-    """
 
     if not all(completed):
         return
 
     for col in range(board.width):
-
         if board.state(row, col) == EMPTY:
             board.cross(
                 row,
                 col,
             )
 
-
-def _auto_cross_completed_line(
-    board: PlayerBoard,
-    completed: list[bool],
-    row: int,
-) -> None:
-    """
-    Equivalent of the final part of JavaScript J().
-
-    If every clue in the row has been completed,
-    automatically cross all remaining empty cells.
-    """
-
-    if not all(completed):
-        return
-
-    for col in range(board.width):
-
-        if board.state(row, col) == EMPTY:
-            board.cross(
-                row,
-                col,
-            )
 
 def _auto_cross_completed_column(
     board: PlayerBoard,
@@ -190,7 +162,10 @@ def _auto_cross_completed_column(
     col: int,
 ) -> None:
     """
-    Cross every remaining EMPTY cell in a completed column.
+    Equivalent of the final part of JavaScript J().
+
+    If every clue in the column has been completed,
+    automatically cross all remaining empty cells.
     """
 
     if not all(completed):
@@ -198,8 +173,10 @@ def _auto_cross_completed_column(
 
     for row in range(board.height):
         if board.state(row, col) == EMPTY:
-            board.cross(row, col)
-
+            board.cross(
+                row,
+                col,
+            )
 
 def _scan_row_left_to_right(
     puzzle: Puzzle,
@@ -428,6 +405,134 @@ def _scan_column_top_to_bottom(
 
     return completed
 
+def _scan_row_right_to_left(
+    puzzle: Puzzle,
+    board: PlayerBoard,
+    row: int,
+) -> list[bool]:
+
+    hints = puzzle.row_runs[row]
+    completed = [False] * len(hints)
+
+    col = puzzle.width - 1
+    hint = len(hints) - 1
+
+    while col >= 0:
+
+        end = col
+        value = board.state(row, col)
+        error = False
+
+        while col >= 0 and board.state(row, col) == value:
+
+            if (
+                board.state(row, col)
+                == puzzle.matrix[row][col]
+                or (
+                    puzzle.matrix[row][col] == EMPTY
+                    and board.state(row, col) == CROSSED
+                )
+            ):
+                pass
+            else:
+                error = True
+
+            col -= 1
+
+        if error:
+            break
+
+        length = end - col
+
+        if value != FILLED:
+            continue
+        
+        if hint < 0:
+            break
+
+        _, hint_length = hints[hint]
+
+        if length == hint_length:
+
+            if (
+                hint > 0
+                and hints[hint - 1][1] == hint_length
+                and col >= 0
+                and board.state(row, col) != EMPTY
+            ):
+                break
+
+            _apply_completed_hint(
+                puzzle,
+                board,
+                completed,
+                row,
+                hint,
+            )
+
+            hint -= 1
+
+        else:
+            break
+
+    _auto_cross_completed_line(
+        board,
+        completed,
+        row,
+    )
+
+    return completed
+
+
+def _scan_column_bottom_to_top(
+    puzzle: Puzzle,
+    board: PlayerBoard,
+    col: int,
+) -> list[bool]:
+    """
+    PASS 4.
+
+    Scan one column from bottom to top.
+    """
+
+    raise NotImplementedError
+
+def analyse(
+    puzzle: Puzzle,
+    board: PlayerBoard,
+) -> bool:
+    """
+    Perform one analysis pass.
+
+    Returns
+    -------
+    bool
+        True if something changed.
+    """
+
+    changed = False
+
+    #
+    # PASS 1
+    #
+    for row in range(puzzle.height):
+        _scan_row_left_to_right(
+            puzzle,
+            board,
+            row,
+        )
+
+    #
+    # PASS 2
+    #
+    for col in range(puzzle.width):
+        _scan_column_top_to_bottom(
+            puzzle,
+            board,
+            col,
+        )
+
+    return changed
     
 def analyse_row_debug(
     puzzle: Puzzle,
