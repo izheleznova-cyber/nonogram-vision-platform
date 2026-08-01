@@ -59,6 +59,8 @@ class GameSession:
             self.puzzle.height,
         )
 
+        
+
     check_count: int = 0
 
     last_check_time: float = 0.0

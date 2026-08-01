@@ -201,7 +201,7 @@ def _scan_row_left_to_right(
     puzzle: Puzzle,
     board: PlayerBoard,
     row: int,
-) -> list[bool]:
+) -> bool:
     """
     PASS 1.
     Scan one row from left to right.
@@ -314,13 +314,13 @@ def _scan_row_left_to_right(
         row,
     )
 
-    return completed
+    return changed
 
 def _scan_column_top_to_bottom(
     puzzle: Puzzle,
     board: PlayerBoard,
     col: int,
-) -> list[bool]:
+) -> bool:
     """
     PASS 2.
     Scan one column from top to bottom.
@@ -328,6 +328,8 @@ def _scan_column_top_to_bottom(
 
     hints = puzzle.column_runs[col]
     completed = [False] * len(hints)
+
+    changed = False
 
     hint = 0
     row = 0
@@ -406,7 +408,7 @@ def _scan_column_top_to_bottom(
             ):
                 break
 
-            _apply_completed_hint(
+            changed |= _apply_completed_hint(
                 puzzle,
                 board,
                 completed,
@@ -419,22 +421,24 @@ def _scan_column_top_to_bottom(
         else:
             break
 
-    _auto_cross_completed_column(
+    changed |= _auto_cross_completed_column(
         board,
         completed,
         col,
     )
 
-    return completed
+    return changed
 
 def _scan_row_right_to_left(
     puzzle: Puzzle,
     board: PlayerBoard,
     row: int,
-) -> list[bool]:
+) -> bool:
 
     hints = puzzle.row_runs[row]
     completed = [False] * len(hints)
+
+    changed = False
 
     col = puzzle.width - 1
     hint = len(hints) - 1
@@ -484,7 +488,7 @@ def _scan_row_right_to_left(
             ):
                 break
 
-            _apply_completed_hint(
+            changed |= _apply_completed_hint(
                 puzzle,
                 board,
                 completed,
@@ -497,24 +501,26 @@ def _scan_row_right_to_left(
         else:
             break
 
-    _auto_cross_completed_line(
+    changed |= _auto_cross_completed_line(
         board,
         completed,
         row,
     )
 
-    return completed
+    return changed
 
 
 def _scan_column_bottom_to_top(
     puzzle: Puzzle,
     board: PlayerBoard,
     column: int,
-) -> list[bool]:
+) -> bool:
 
     hints = puzzle.column_runs[column]
 
     completed = [False] * len(hints)
+
+    changed = False
 
     if not hints:
         return completed
@@ -553,7 +559,7 @@ def _scan_column_bottom_to_top(
             ):
                 break
 
-            _apply_completed_hint(
+            changed |= _apply_completed_hint(
                 puzzle,
                 board,
                 completed,
@@ -567,68 +573,70 @@ def _scan_column_bottom_to_top(
         else:
             break
 
-    _auto_cross_completed_column(
+    changed |= _auto_cross_completed_column(
         board,
         completed,
         column,
     )
 
-    return completed
+    return changed
 
 def analyse(
     puzzle: Puzzle,
     board: PlayerBoard,
-) -> bool:
+) -> QaResult:
     """
-    Perform one analysis pass.
-
-    Returns
-    -------
-    bool
-        True if something changed.
+    Perform analysis until stable.
     """
 
-    changed = False
+    while True:
 
-    #
-    # PASS 1
-    #
-    for row in range(puzzle.height):
-        _scan_row_left_to_right(
-            puzzle,
-            board,
-            row,
-        )
+        changed = False
 
-    #
-    # PASS 2
-    #
-    for col in range(puzzle.width):
-        _scan_column_top_to_bottom(
-            puzzle,
-            board,
-            col,
-        )
-    #
-    # PASS 3
-    #
-    for row in range(puzzle.height):
-        _scan_row_right_to_left(
-            puzzle,
-            board,
-            row,
-        )
+        #
+        # PASS 1
+        #
+        for row in range(puzzle.height):
+            changed |= _scan_row_left_to_right(
+                puzzle,
+                board,
+                row,
+            )
 
-    #
-    # PASS 4
-    #
-    for col in range(puzzle.width):
-        _scan_column_bottom_to_top(
-            puzzle,
-            board,
-            col,
-        )
-    return changed
+        #
+        # PASS 2
+        #
+        for col in range(puzzle.width):
+            changed |= _scan_column_top_to_bottom(
+                puzzle,
+                board,
+                col,
+            )
+
+        #
+        # PASS 3
+        #
+        for row in range(puzzle.height):
+            changed |= _scan_row_right_to_left(
+                puzzle,
+                board,
+                row,
+            )
+
+        #
+        # PASS 4
+        #
+        for col in range(puzzle.width):
+            changed |= _scan_column_bottom_to_top(
+                puzzle,
+                board,
+                col,
+            )
+
+        if not changed:
+            break
+
+    return True
     
 def analyse_row_debug(
     puzzle: Puzzle,
