@@ -24,7 +24,7 @@ from core.game.settings import LessonSettings
 from core.puzzle.renderer import render_puzzle
 
 
-PAGE_ID = 1039
+PAGE_ID = 6548
 
 
 def main() -> None:

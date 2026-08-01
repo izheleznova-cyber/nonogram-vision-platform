@@ -32,6 +32,8 @@ from core.game.completed_hints import (
     completed_column_hints,
 )
 
+from PyQt6.QtWidgets import QWidget, QMessageBox
+
 class BoardWidget(QWidget):
     """
     Interactive puzzle board.
@@ -96,6 +98,16 @@ class BoardWidget(QWidget):
     # ---------------------------------------------------------
     # Temporary compatibility
     # ---------------------------------------------------------
+        # Позиция мыши для подсветки
+        self._hover_row = -1
+        self._hover_col = -1
+        
+        # Включить отслеживание движения мыши
+        self.setMouseTracking(True)
+
+        # Completion state
+        self._is_completed = False
+
 
     def load_image(
         self,
@@ -169,9 +181,15 @@ class BoardWidget(QWidget):
         """
         Update widget after player move.
         """
-
+        was_completed = self._is_completed
+        self._is_completed = self._check_completed()
+        
         self.update_completed_hints()
-
+        
+        # Show message only once when completed
+        if self._is_completed and not was_completed:
+            self._show_completion_message()
+        
         self.update()
 
     # ---------------------------------------------------------
@@ -246,6 +264,67 @@ class BoardWidget(QWidget):
     # Painting
     # ---------------------------------------------------------
 
+    def mouseMoveEvent(
+        self,
+        event: QMouseEvent,
+    ) -> None:
+        """
+        Track mouse position for hint highlighting.
+        """
+        if self._layout is None:
+            return
+        if self._puzzle is None:
+            return
+        
+        x = event.position().x()
+        y = event.position().y()
+        left = self._layout.puzzle_x
+        top = self._layout.puzzle_y
+        cell = self._layout.cell_size
+        
+        # Проверяем, находится ли курсор над игровым полем
+        if x < left or y < top:
+            # Мышь вне поля - сбрасываем подсветку
+            if self._hover_row != -1 or self._hover_col != -1:
+                self._hover_row = -1
+                self._hover_col = -1
+                self.update()
+            return
+        
+        col = int((x - left) // cell)
+        row = int((y - top) // cell)
+        
+        # Проверяем границы
+        if row < 0 or row >= self._puzzle.height:
+            row = -1
+        if col < 0 or col >= self._puzzle.width:
+            col = -1
+        
+        # Обновляем только если позиция изменилась
+        if self._hover_row != row or self._hover_col != col:
+            self._hover_row = row
+            self._hover_col = col
+            self.update()
+    
+    def leaveEvent(
+        self,
+        event,
+    ) -> None:
+        """
+        Clear highlight when mouse leaves widget.
+        """
+        if self._hover_row != -1 or self._hover_col != -1:
+            self._hover_row = -1
+            self._hover_col = -1
+            self.update()
+    # === КОНЕЦ ВСТАВКИ ===
+
+    # -
+    # Painting
+    # -
+    
+
+
     def paintEvent(
         self,
         event,
@@ -295,6 +374,11 @@ class BoardWidget(QWidget):
         #
 
         self._draw_player(painter)
+
+        # Highlighted hints (NEW)
+        if self.scale >= 0.75:
+            self._draw_highlighted_hints(painter)
+
     # ---------------------------------------------------------
     # Grid
     # ---------------------------------------------------------
@@ -541,6 +625,53 @@ class BoardWidget(QWidget):
                         x + cell - 2,
                         line_y,
                     )
+
+    def _draw_highlighted_hints(
+        self,
+        painter: QPainter,
+    ) -> None:
+        """
+        Highlight row and column hints under cursor.
+        """
+        if self._hover_row < 0 and self._hover_col < 0:
+            return
+        
+        if self._layout is None:
+            return
+        
+        layout = self._layout
+        cell = layout.cell_size
+        
+        # Цвет подсветки
+        highlight_color = QColor(255, 255, 150, 100)  # Полупрозрачный желтый
+        
+        # Подсветка строки подсказок
+        if self._hover_row >= 0:
+            left = layout.puzzle_x - layout.left_hint_cells * cell
+            y = layout.puzzle_y + self._hover_row * cell
+            
+            painter.fillRect(
+                left,
+                y,
+                layout.left_hint_cells * cell,
+                cell,
+                highlight_color,
+            )
+        
+        # Подсветка столбца подсказок
+        if self._hover_col >= 0:
+            top = layout.puzzle_y - layout.top_hint_cells * cell
+            x = layout.puzzle_x + self._hover_col * cell
+            
+            painter.fillRect(
+                x,
+                top,
+                cell,
+                layout.top_hint_cells * cell,
+                highlight_color,
+            )
+
+
 
     def _hint_font(self) -> QFont:
         """
@@ -814,13 +945,10 @@ class BoardWidget(QWidget):
         """
         Update completed row and column hints.
         """
-
         if self._session is None:
             return
-
         puzzle = self._session.puzzle
         board = self._session.board
-
         self._completed_row_hints = [
             completed_row_hints(
                 puzzle,
@@ -829,7 +957,6 @@ class BoardWidget(QWidget):
             )
             for row in range(puzzle.height)
         ]
-
         self._completed_column_hints = [
             completed_column_hints(
                 puzzle,
@@ -838,6 +965,52 @@ class BoardWidget(QWidget):
             )
             for col in range(puzzle.width)
         ]
+
+    # === ВСТАВИТЬ ЗДЕСЬ ===
+    def _check_completed(
+        self,
+    ) -> bool:
+        """
+        Check if puzzle is fully solved.
+        """
+        if self._session is None:
+            return False
+        
+        puzzle = self._session.puzzle
+        board = self._session.board
+        
+        for row in range(puzzle.height):
+            for col in range(puzzle.width):
+                expected = puzzle.matrix[row][col]
+                actual = board.state(row, col)
+                
+                # Если клетка должна быть заполнена, но пуста или зачёркнута
+                if expected != 0 and actual != FILLED:
+                    return False
+                
+                # Если клетка должна быть пустой, но заполнена
+                if expected == 0 and actual == FILLED:
+                    return False
+        
+        return True
+
+    def _show_completion_message(
+        self,
+    ) -> None:
+        """
+        Show completion congratulation.
+        """
+        from PyQt6.QtWidgets import QMessageBox
+        
+        msg = QMessageBox()
+        msg.setWindowTitle("Completed!")
+        msg.setText("🎉 Completed!")
+        msg.setInformativeText(
+            "Congratulations! You have successfully solved the puzzle!"
+        )
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.exec()
+    
 
     def _draw_player(
         self,
