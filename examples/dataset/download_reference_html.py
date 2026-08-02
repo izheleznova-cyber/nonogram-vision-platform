@@ -15,7 +15,7 @@ def main() -> None:
 
     passports = read_passports(WORKBOOK)
 
-    dataset = build_reference_dataset(passports)
+    dataset = passports
 
     print("=" * 60)
     print("DOWNLOAD REFERENCE HTML")
@@ -30,6 +30,10 @@ def main() -> None:
         )
 
         print(f"Downloading {passport.page_id}...")
+
+        if save_path.exists():
+            print(f"Cached     {save_path}")
+            continue
 
         downloaded = download_html(
             passport.url,

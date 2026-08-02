@@ -1,76 +1,115 @@
 """
 extract_script.py
 
-Извлекает встроенный JavaScript с данными кроссворда
-из HTML-страницы и сохраняет его отдельно.
+Extract embedded JavaScript (var d)
+from downloaded HTML pages and save
+it into cache/.
 
-Используется для исследования структуры JavaScript
-перед написанием html_parser.py.
+Can be executed repeatedly.
+Already extracted scripts are skipped.
 """
+
+from __future__ import annotations
 
 from bs4 import BeautifulSoup
 
 from core.dataset.paths import (
     CACHE_DIR,
+    WORKBOOK,
     get_html_path,
 )
-
-
-SOURCE = "nonograms"
-PAGE_ID = 1039
+from core.dataset.passport_reader import read_passports
 
 
 def main() -> None:
 
-    html_path = get_html_path(
-        SOURCE,
-        PAGE_ID,
-    )
+    passports = read_passports(WORKBOOK)
 
-    print(f"Reading: {html_path}")
+    print("=" * 60)
+    print("EXTRACT JAVASCRIPT")
+    print("=" * 60)
+    print()
 
-    html = html_path.read_text(
-        encoding="utf-8",
-    )
-
-    soup = BeautifulSoup(
-        html,
-        "html.parser",
-    )
-
-    scripts = soup.find_all("script")
-
-    target_script = None
-
-    for script in scripts:
-
-        text = script.get_text()
-
-        if "var d=" in text or "var d =" in text:
-
-            target_script = text
-            break
-
-    if target_script is None:
-
-        print("Embedded puzzle script not found.")
-        return
+    print(f"Passports: {len(passports)}")
+    print()
 
     CACHE_DIR.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    output_file = CACHE_DIR / f"{PAGE_ID}_script.js"
+    created = 0
+    cached = 0
+    missing = 0
 
-    output_file.write_text(
-        target_script,
-        encoding="utf-8",
-    )
+    for passport in passports:
+
+        html_path = get_html_path(
+            passport.source,
+            passport.page_id,
+        )
+
+        #
+        # HTML not downloaded.
+        #
+        if not html_path.exists():
+            print(f"HTML missing : {passport.page_id}")
+            missing += 1
+            continue
+
+        output_file = CACHE_DIR / f"{passport.page_id}_script.js"
+
+        #
+        # Script already exists.
+        #
+        if output_file.exists():
+            cached += 1
+            continue
+
+        print(f"Reading: {html_path}")
+
+        html = html_path.read_text(
+            encoding="utf-8",
+        )
+
+        soup = BeautifulSoup(
+            html,
+            "html.parser",
+        )
+
+        target_script = None
+
+        for script in soup.find_all("script"):
+
+            text = script.get_text()
+
+            if "var d=" in text or "var d =" in text:
+                target_script = text
+                break
+
+        if target_script is None:
+            print(f"Script not found: {passport.page_id}")
+            continue
+
+        output_file.write_text(
+            target_script,
+            encoding="utf-8",
+        )
+
+        created += 1
+
+        print(f"Saved: {output_file}")
 
     print()
-    print("JavaScript extracted successfully.")
-    print(f"Saved to: {output_file}")
+    print("=" * 60)
+    print("DONE")
+    print("=" * 60)
+    print()
+
+    print(f"Passports        : {len(passports)}")
+    print(f"Created scripts  : {created}")
+    print(f"Already cached   : {cached}")
+    print(f"Missing HTML     : {missing}")
 
 
 if __name__ == "__main__":
