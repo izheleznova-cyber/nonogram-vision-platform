@@ -3,11 +3,14 @@ Main teacher window.
 """
 
 from __future__ import annotations
+from pathlib import Path
 
 from PyQt6.QtWidgets import (
     QWidget,
-    QVBoxLayout,
     QLabel,
+    QListWidget,
+    QVBoxLayout,
+    QHBoxLayout,
 )
 
 
@@ -40,6 +43,14 @@ class TeacherGui(QWidget):
             "Teacher platform"
         )
 
+        self.lesson_list = QListWidget()
+
+        for lesson in self._find_lessons():
+
+            self.lesson_list.addItem(
+                lesson
+            )
+
     # ---------------------------------------------------------
     # Layout
     # ---------------------------------------------------------
@@ -48,15 +59,41 @@ class TeacherGui(QWidget):
 
         layout = QVBoxLayout(self)
 
-        layout.setContentsMargins(
-            10,
-            10,
-            10,
-            10,
+        layout.addWidget(self.title)
+
+        content = QHBoxLayout()
+
+        content.addWidget(
+            self.lesson_list,
+            stretch=1,
         )
 
-        layout.setSpacing(8)
-
-        layout.addWidget(
-            self.title
+        self.info = QLabel(
+            "Select lesson"
         )
+
+        content.addWidget(
+            self.info,
+            stretch=2,
+        )
+
+        layout.addLayout(content)
+
+    def _find_lessons(self) -> list[str]:
+        """
+        Return available lesson directories.
+        """
+
+        lessons_dir = Path("../nonogram-dataset/lessons")
+
+        if not lessons_dir.exists():
+            return []
+
+        lessons = []
+
+        for path in sorted(lessons_dir.iterdir()):
+
+            if path.is_dir():
+                lessons.append(path.name)
+
+        return lessons
