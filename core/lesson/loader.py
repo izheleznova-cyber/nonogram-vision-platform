@@ -9,7 +9,6 @@ from pathlib import Path
 
 from .lesson import Lesson
 
-
 def load_lesson(path: str | Path) -> Lesson:
     """
     Load lesson from directory.

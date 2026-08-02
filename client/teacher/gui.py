@@ -4,20 +4,19 @@ Main teacher window.
 
 from __future__ import annotations
 from pathlib import Path
+from core.lesson.loader import load_lesson 
 
 from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
     QListWidget,
+    QPushButton,
     QVBoxLayout,
     QHBoxLayout,
 )
 
 
 class TeacherGui(QWidget):
-    """
-    Main teacher application window.
-    """
 
     def __init__(self) -> None:
         super().__init__()
@@ -32,6 +31,8 @@ class TeacherGui(QWidget):
         self._create_widgets()
 
         self._build_layout()
+
+        self._connect_signals()
 
     # ---------------------------------------------------------
     # Widgets
@@ -51,6 +52,18 @@ class TeacherGui(QWidget):
                 lesson
             )
 
+        self.info = QLabel(
+            "Select lesson"
+        )
+
+        #
+        # Buttons
+        #
+
+        self.open_button = QPushButton(
+            "Open lesson"
+        )
+
     # ---------------------------------------------------------
     # Layout
     # ---------------------------------------------------------
@@ -59,25 +72,91 @@ class TeacherGui(QWidget):
 
         layout = QVBoxLayout(self)
 
-        layout.addWidget(self.title)
+        layout.addWidget(
+            self.title
+        )
 
         content = QHBoxLayout()
 
-        content.addWidget(
-            self.lesson_list,
+        #
+        # Left panel
+        #
+
+        left = QVBoxLayout()
+
+        left.addWidget(
+            self.lesson_list
+        )
+
+        left.addWidget(
+            self.open_button
+        )
+
+        #
+        # Right panel
+        #
+
+        right = QVBoxLayout()
+
+        right.addWidget(
+            self.info
+        )
+
+        content.addLayout(
+            left,
             stretch=1,
         )
 
-        self.info = QLabel(
-            "Select lesson"
-        )
-
-        content.addWidget(
-            self.info,
+        content.addLayout(
+            right,
             stretch=2,
         )
 
         layout.addLayout(content)
+
+    def _connect_signals(self) -> None:
+        """
+        Connect widget signals.
+        """
+
+        self.lesson_list.currentTextChanged.connect(
+            self._lesson_selected
+        )
+
+        self.open_button.clicked.connect(
+            self._open_lesson
+        )
+
+    def _lesson_selected(
+        self,
+        lesson_name: str,
+    ) -> None:
+
+        if not lesson_name:
+            return
+
+        path = (
+            Path("../nonogram-dataset/lessons")
+            / lesson_name
+        )
+
+        lesson = load_lesson(path)
+
+        self.info.setText(
+            f"""Name:
+    {lesson.name}
+
+    Title:
+    {lesson.title}
+
+    Puzzles:
+    {lesson.count}
+
+    Maximum size:
+    {lesson.max_width} × {lesson.max_height}
+    """
+        )
+
 
     def _find_lessons(self) -> list[str]:
         """
@@ -97,3 +176,34 @@ class TeacherGui(QWidget):
                 lessons.append(path.name)
 
         return lessons
+
+    def _open_lesson(self) -> None:
+        """
+        Open selected lesson.
+        """
+
+        item = self.lesson_list.currentItem()
+
+        if item is None:
+            return
+
+        lesson_name = item.text()
+
+        path = (
+            Path("../nonogram-dataset/lessons")
+            / lesson_name
+        )
+
+        lesson = load_lesson(path)
+
+        print()
+
+        print("=" * 60)
+        print("OPEN LESSON")
+        print("=" * 60)
+
+        print(f"Name       : {lesson.name}")
+        print(f"Title      : {lesson.title}")
+        print(f"Puzzles    : {lesson.count}")
+        print(f"Max width  : {lesson.max_width}")
+        print(f"Max height : {lesson.max_height}")
