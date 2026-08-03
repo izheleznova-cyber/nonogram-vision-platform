@@ -16,6 +16,8 @@ from core.dataset.passport_record import PassportRecord
 from core.dataset.paths import JSON_DIR
 from core.dataset.field_info import FieldInfo
 
+from core.lesson.query import LessonQuery
+
 class PassportDatabase:
     """
     Collection of passport records.
@@ -58,6 +60,73 @@ class PassportDatabase:
         raise KeyError(
             f"Unknown passport: {passport_id}"
         )
+
+    def search(
+        self,
+        query: LessonQuery,
+    ) -> list[PassportRecord]:
+        """
+        Search passports matching lesson query.
+        """
+
+        result: list[PassportRecord] = []
+
+        for passport in self.records:
+
+            #
+            # Width
+            #
+
+            if (
+                query.max_width is not None
+                and passport.width > query.max_width
+            ):
+                continue
+
+            #
+            # Height
+            #
+
+            if (
+                query.max_height is not None
+                and passport.height > query.max_height
+            ):
+                continue
+
+            #
+            # Category
+            #
+
+            if (
+                query.category is not None
+                and passport.category != query.category
+            ):
+                continue
+
+            #
+            # Difficulty
+            #
+
+            if (
+                query.difficulty is not None
+                and passport.difficulty != query.difficulty
+            ):
+                continue
+
+            #
+            # Color
+            #
+
+            if (
+                query.color is not None
+                and passport.color != query.color
+            ):
+                continue
+
+            result.append(passport)
+
+        return result
+
 
     @property
     def builtin_fields(self) -> list[str]:
