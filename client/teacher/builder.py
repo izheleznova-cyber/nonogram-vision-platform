@@ -8,6 +8,9 @@ from core.dataset.passport_database import PassportDatabase
 
 from core.lesson.query import LessonQuery
 from .widgets.passport_widget import PassportWidget
+from .widgets.preview_widget import PreviewWidget
+
+from core.dataset.passport_record import PassportRecord
 
 from PyQt6.QtWidgets import (
     QGroupBox,
@@ -40,6 +43,12 @@ class LessonBuilder(QWidget):
         self._create_widgets()
 
         self.database = PassportDatabase()
+
+        #
+        # Current lesson
+        #
+
+        self._lesson: list[PassportRecord] = []
 
         self.filters.set_database(
             self.database
@@ -78,6 +87,8 @@ class LessonBuilder(QWidget):
         self.candidate_list = QListWidget()
 
         self.passport = PassportWidget()
+
+        self.preview = PreviewWidget()
 
         self.passport_box = QGroupBox(
             "Passport"
@@ -149,6 +160,12 @@ class LessonBuilder(QWidget):
             self.passport
         )
 
+        passport.addStretch()
+
+        passport.addWidget(
+            self.passport
+        )
+
         self.passport_box.setLayout(
             passport
         )
@@ -197,7 +214,7 @@ class LessonBuilder(QWidget):
 
         layout.addWidget(
             self.passport_box,
-            stretch=1,
+            stretch=2,
         )
 
         layout.addWidget(
@@ -217,6 +234,10 @@ class LessonBuilder(QWidget):
 
         self.candidate_list.currentRowChanged.connect(
             self._candidate_selected
+        )
+
+        self.add_button.clicked.connect(
+            self._add_to_lesson
         )
 
     # ---------------------------------------------------------
@@ -259,4 +280,26 @@ class LessonBuilder(QWidget):
 
         self.passport.set_passport(
             passport
+        )
+
+    def _add_to_lesson(self) -> None:
+        """
+        Add selected passport to lesson.
+        """
+
+        row = self.candidate_list.currentRow()
+
+        if row < 0:
+            return
+
+        passport = self._candidates[row]
+
+        self._lesson.append(
+            passport
+        )
+
+        self.lesson_list.addItem(
+            f"{len(self._lesson):2d}   "
+            f"{passport.id:10}   "
+            f"{passport.title}"
         )
