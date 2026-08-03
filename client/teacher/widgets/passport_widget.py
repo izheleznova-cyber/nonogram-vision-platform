@@ -48,6 +48,10 @@ class PassportWidget(QWidget):
             passport.category
         )
 
+        self.subcategory.setText(
+            passport.subcategory
+        )
+
         self.difficulty.setText(
             str(passport.difficulty)
         )
@@ -76,6 +80,8 @@ class PassportWidget(QWidget):
         self.title = QLabel()
 
         self.category = QLabel()
+
+        self.subcategory = QLabel()
 
         self.difficulty = QLabel()
 
@@ -106,6 +112,11 @@ class PassportWidget(QWidget):
         layout.addRow(
             "Category",
             self.category,
+        )
+
+        layout.addRow(
+            "Subcategory",
+            self.subcategory,
         )
 
         layout.addRow(

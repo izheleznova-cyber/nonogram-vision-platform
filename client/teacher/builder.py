@@ -7,6 +7,7 @@ from .widgets.filters_widget import FiltersWidget
 from core.dataset.passport_database import PassportDatabase
 
 from core.lesson.query import LessonQuery
+from .widgets.passport_widget import PassportWidget
 
 from PyQt6.QtWidgets import (
     QGroupBox,
@@ -76,6 +77,12 @@ class LessonBuilder(QWidget):
 
         self.candidate_list = QListWidget()
 
+        self.passport = PassportWidget()
+
+        self.passport_box = QGroupBox(
+            "Passport"
+        )
+
         self.lesson_list = QListWidget()
 
         #
@@ -133,6 +140,20 @@ class LessonBuilder(QWidget):
         )
 
         #
+        # Passport
+        #
+
+        passport = QVBoxLayout()
+
+        passport.addWidget(
+            self.passport
+        )
+
+        self.passport_box.setLayout(
+            passport
+        )
+
+        #
         # Lesson
         #
 
@@ -175,6 +196,11 @@ class LessonBuilder(QWidget):
         )
 
         layout.addWidget(
+            self.passport_box,
+            stretch=1,
+        )
+
+        layout.addWidget(
             self.lesson_box,
             stretch=2,
         )
@@ -187,6 +213,10 @@ class LessonBuilder(QWidget):
 
         self.filters.find_button.clicked.connect(
             self._find_candidates
+        )
+
+        self.candidate_list.currentRowChanged.connect(
+            self._candidate_selected
         )
 
     # ---------------------------------------------------------
@@ -204,6 +234,8 @@ class LessonBuilder(QWidget):
             query
         )
 
+        self._candidates = passports
+
         self.candidate_list.clear()
 
         for passport in passports:
@@ -211,3 +243,20 @@ class LessonBuilder(QWidget):
             self.candidate_list.addItem(
                 f"{passport.id:10}   {passport.title}"
             )
+
+    def _candidate_selected(
+        self,
+        row: int,
+    ) -> None:
+        """
+        Display selected passport.
+        """
+
+        if row < 0:
+            return
+
+        passport = self._candidates[row]
+
+        self.passport.set_passport(
+            passport
+        )
