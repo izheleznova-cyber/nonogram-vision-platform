@@ -1,31 +1,38 @@
 """
-Main teacher window.
+Main teacher application.
+
+Entry point for the teacher platform.
 """
 
 from __future__ import annotations
-from pathlib import Path
-from core.lesson.loader import load_lesson 
 
 from PyQt6.QtWidgets import (
-    QWidget,
     QLabel,
-    QListWidget,
     QPushButton,
     QVBoxLayout,
-    QHBoxLayout,
+    QWidget,
 )
+
+from .builder import LessonBuilder
+from .browser import LessonBrowser
+from .monitor import LessonMonitor
 
 
 class TeacherGui(QWidget):
+    """
+    Main teacher window.
+    """
 
     def __init__(self) -> None:
         super().__init__()
 
-        self.setWindowTitle("Teacher GUI")
+        self.setWindowTitle(
+            "Teacher platform"
+        )
 
         self.resize(
-            1000,
-            700,
+            500,
+            300,
         )
 
         self._create_widgets()
@@ -44,24 +51,16 @@ class TeacherGui(QWidget):
             "Teacher platform"
         )
 
-        self.lesson_list = QListWidget()
-
-        for lesson in self._find_lessons():
-
-            self.lesson_list.addItem(
-                lesson
-            )
-
-        self.info = QLabel(
-            "Select lesson"
+        self.build_button = QPushButton(
+            "Build lesson"
         )
 
-        #
-        # Buttons
-        #
+        self.browser_button = QPushButton(
+            "Lesson Designer"
+        )
 
-        self.open_button = QPushButton(
-            "Open lesson"
+        self.monitor_button = QPushButton(
+            "Monitor"
         )
 
     # ---------------------------------------------------------
@@ -76,134 +75,56 @@ class TeacherGui(QWidget):
             self.title
         )
 
-        content = QHBoxLayout()
-
-        #
-        # Left panel
-        #
-
-        left = QVBoxLayout()
-
-        left.addWidget(
-            self.lesson_list
+        layout.addWidget(
+            self.build_button
         )
 
-        left.addWidget(
-            self.open_button
+        layout.addWidget(
+            self.browser_button
         )
 
-        #
-        # Right panel
-        #
-
-        right = QVBoxLayout()
-
-        right.addWidget(
-            self.info
+        layout.addWidget(
+            self.monitor_button
         )
 
-        content.addLayout(
-            left,
-            stretch=1,
-        )
+        layout.addStretch()
 
-        content.addLayout(
-            right,
-            stretch=2,
-        )
-
-        layout.addLayout(content)
+    # ---------------------------------------------------------
+    # Signals
+    # ---------------------------------------------------------
 
     def _connect_signals(self) -> None:
-        """
-        Connect widget signals.
-        """
 
-        self.lesson_list.currentTextChanged.connect(
-            self._lesson_selected
+        self.build_button.clicked.connect(
+            self._build_lesson
         )
 
-        self.open_button.clicked.connect(
-            self._open_lesson
+        self.browser_button.clicked.connect(
+            self._show_lessons
         )
 
-    def _lesson_selected(
-        self,
-        lesson_name: str,
-    ) -> None:
-
-        if not lesson_name:
-            return
-
-        path = (
-            Path("../nonogram-dataset/lessons")
-            / lesson_name
+        self.monitor_button.clicked.connect(
+            self._show_monitor
         )
 
-        lesson = load_lesson(path)
+    # ---------------------------------------------------------
+    # Slots
+    # ---------------------------------------------------------
 
-        self.info.setText(
-            f"""Name:
-    {lesson.name}
+    def _build_lesson(self) -> None:
 
-    Title:
-    {lesson.title}
+        self.builder = LessonBuilder()
 
-    Puzzles:
-    {lesson.count}
+        self.builder.show()
 
-    Maximum size:
-    {lesson.max_width} × {lesson.max_height}
-    """
-        )
+    def _show_lessons(self) -> None:
 
+        self.browser = LessonBrowser()
 
-    def _find_lessons(self) -> list[str]:
-        """
-        Return available lesson directories.
-        """
+        self.browser.show()
 
-        lessons_dir = Path("../nonogram-dataset/lessons")
+    def _show_monitor(self) -> None:
 
-        if not lessons_dir.exists():
-            return []
+        self.monitor = LessonMonitor()
 
-        lessons = []
-
-        for path in sorted(lessons_dir.iterdir()):
-
-            if path.is_dir():
-                lessons.append(path.name)
-
-        return lessons
-
-    def _open_lesson(self) -> None:
-        """
-        Open selected lesson.
-        """
-
-        item = self.lesson_list.currentItem()
-
-        if item is None:
-            return
-
-        lesson_name = item.text()
-
-        path = (
-            Path("../nonogram-dataset/lessons")
-            / lesson_name
-        )
-
-        lesson = load_lesson(path)
-
-        print()
-
-        print("=" * 60)
-        print("OPEN LESSON")
-        print("=" * 60)
-
-        print(f"Name       : {lesson.name}")
-        print(f"Title      : {lesson.title}")
-        print(f"Puzzles    : {lesson.count}")
-        print(f"Max width  : {lesson.max_width}")
-        print(f"Max height : {lesson.max_height}")
+        self.monitor.show()

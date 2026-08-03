@@ -16,11 +16,6 @@ from core.dataset.passport_record import PassportRecord
 from core.dataset.paths import JSON_DIR
 from core.dataset.field_info import FieldInfo
 
-
-
-
-
-
 class PassportDatabase:
     """
     Collection of passport records.
@@ -46,6 +41,23 @@ class PassportDatabase:
         Return number of passports.
         """
         return len(self._records)
+
+    def record(
+        self,
+        passport_id: str,
+    ) -> PassportRecord:
+        """
+        Return passport by identifier.
+        """
+
+        for record in self._records:
+
+            if record.id == passport_id:
+                return record
+
+        raise KeyError(
+            f"Unknown passport: {passport_id}"
+        )
 
     @property
     def builtin_fields(self) -> list[str]:

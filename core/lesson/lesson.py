@@ -2,20 +2,15 @@
 Lesson model.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
+
+from core.dataset.passport_record import PassportRecord
 
 
 @dataclass(slots=True)
 class Lesson:
     """
-    One lesson description.
-
-    A lesson contains only puzzle identifiers and
-    basic metadata.
-
-    It does not contain Puzzle objects.
+    Lesson description.
     """
 
     name: str
@@ -30,7 +25,15 @@ class Lesson:
 
     @property
     def count(self) -> int:
-        """
-        Number of puzzles.
-        """
         return len(self.ids)
+
+
+@dataclass(slots=True)
+class LessonItem:
+    """
+    One puzzle inside a lesson.
+    """
+
+    number: int
+
+    passport: PassportRecord
