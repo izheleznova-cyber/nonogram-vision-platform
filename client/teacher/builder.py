@@ -12,6 +12,7 @@ from .widgets.preview_widget import PreviewWidget
 
 from core.dataset.passport_record import PassportRecord
 
+
 from PyQt6.QtWidgets import (
     QGroupBox,
     QLabel,
@@ -156,15 +157,11 @@ class LessonBuilder(QWidget):
 
         passport = QVBoxLayout()
 
-        passport.addWidget(
-            self.passport
-        )
+        passport.addWidget(self.preview)
+
+        passport.addWidget(self.passport)
 
         passport.addStretch()
-
-        passport.addWidget(
-            self.passport
-        )
 
         self.passport_box.setLayout(
             passport
@@ -282,6 +279,10 @@ class LessonBuilder(QWidget):
             passport
         )
 
+        self.preview.set_passport(
+            passport
+        )
+
     def _add_to_lesson(self) -> None:
         """
         Add selected passport to lesson.
@@ -302,4 +303,22 @@ class LessonBuilder(QWidget):
             f"{len(self._lesson):2d}   "
             f"{passport.id:10}   "
             f"{passport.title}"
+        )
+
+    def set_passport(
+        self,
+        passport: PassportRecord,
+    ) -> None:
+        """
+        Display preview for selected passport.
+        """
+
+        #
+        # Пока миниатюр нет.
+        #
+
+        self.clear()
+
+        self.setText(
+            "No preview"
         )

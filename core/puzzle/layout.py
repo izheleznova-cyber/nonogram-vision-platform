@@ -45,6 +45,7 @@ def calculate_layout(
     puzzle: Puzzle,
     cell_size: int = CELL_SIZE,
     margin: int = MARGIN,
+    preview: bool = False,
 ) -> Layout:
     """
     Calculate layout for rendering.
@@ -56,15 +57,25 @@ def calculate_layout(
     if puzzle.column_hints is None:
         raise ValueError("column_hints are missing")
 
-    left_hint_cells = max(
-        len(hints)
-        for hints in puzzle.row_hints
-    )
+    if preview:
 
-    top_hint_cells = max(
-        len(hints)
-        for hints in puzzle.column_hints
-    )
+        left_hint_cells = 0
+
+        top_hint_cells = 0
+
+        margin = 0
+
+    else:
+
+        left_hint_cells = max(
+            len(hints)
+            for hints in puzzle.row_hints
+        )
+
+        top_hint_cells = max(
+            len(hints)
+            for hints in puzzle.column_hints
+        )
 
     puzzle_width = puzzle.width * cell_size
 

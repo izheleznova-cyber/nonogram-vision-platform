@@ -5,6 +5,8 @@ Puzzle preview widget.
 from __future__ import annotations
 
 from pathlib import Path
+from core.dataset.paths import PREVIEW_DIR
+
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
@@ -66,3 +68,27 @@ class PreviewWidget(QLabel):
             )
 
         )
+
+    def set_passport(
+        self,
+        passport: PassportRecord,
+    ) -> None:
+        """
+        Display preview for selected passport.
+        """
+
+        preview = PREVIEW_DIR / f"{passport.id}.png"
+
+        if preview.exists():
+
+            self.set_preview(
+                preview,
+            )
+
+        else:
+
+            self.clear()
+
+            self.setText(
+                "No preview",
+            )

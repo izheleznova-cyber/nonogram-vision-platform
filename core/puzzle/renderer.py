@@ -45,65 +45,84 @@ DEBUG_HINT_INDEX = False
 def render_puzzle(
     puzzle: Puzzle,
     output: Path,
-    board: PlayerBoard | None = None
+    board: PlayerBoard | None = None,
+    preview: bool = False,
+    cell_size: int | None = None,
 ) -> None:
-    """
-    Render puzzle to PNG file.
-    """
 
-    layout = calculate_layout(puzzle)
+    if cell_size is None:
+
+        layout = calculate_layout(
+            puzzle,
+            preview=preview,
+        )
+
+    else:
+
+        layout = calculate_layout(
+            puzzle,
+            cell_size=cell_size,
+            preview=preview,
+        )
 
     image = Image.new(
         "RGB",
-        (layout.image_width, layout.image_height),
+        (
+            layout.image_width,
+            layout.image_height,
+        ),
         BACKGROUND,
     )
 
     draw = ImageDraw.Draw(image)
 
-    _draw_grid(
-        draw,
-        layout,
-    )
+    if not preview:
+
+        _draw_grid(
+            draw,
+            layout,
+        )
 
     if DEBUG_HINT_GRID:
+
         _draw_hint_grid(
             draw,
             layout,
         )
 
     if DEBUG_HINT_INDEX:
+
         _draw_hint_indexes(
             draw,
             layout,
         )
-    
+
     _draw_cells(
-    draw,
-    puzzle,
-    layout,
-    board,
-    )
-
-    
-    _draw_row_hints(
-    draw,
-    puzzle,
-    layout,
-    )
-
-    _draw_column_hints(
-    draw,
-    puzzle,
-    layout,
-    )
-
-    
-    _draw_coordinates(
         draw,
         puzzle,
         layout,
+        board,
     )
+
+    if not preview:
+
+        _draw_row_hints(
+            draw,
+            puzzle,
+            layout,
+        )
+
+        _draw_column_hints(
+            draw,
+            puzzle,
+            layout,
+        )
+
+        _draw_coordinates(
+            draw,
+            puzzle,
+            layout,
+        )
 
     image.save(output)
 
