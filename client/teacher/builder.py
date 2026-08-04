@@ -3,8 +3,11 @@ Lesson builder.
 """
 
 from __future__ import annotations
+from pathlib import Path
+
 from .widgets.filters_widget import FiltersWidget
 from core.dataset.passport_database import PassportDatabase
+from core.dataset.paths import DATASET_ROOT
 
 from core.lesson.query import LessonQuery
 from .widgets.passport_widget import PassportWidget
@@ -21,6 +24,8 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QVBoxLayout,
     QWidget,
+    QInputDialog,
+    QMessageBox,
 )
 
 
@@ -50,6 +55,8 @@ class LessonBuilder(QWidget):
         #
 
         self._lesson: list[PassportRecord] = []
+
+        self._lesson_directory = None
 
         self.filters.set_database(
             self.database
@@ -110,8 +117,13 @@ class LessonBuilder(QWidget):
         )
 
         self.save_button = QPushButton(
-            "Save lesson"
+            "Save"
         )
+
+        self.save_as_button = QPushButton(
+            "Save As..."
+        )
+        
 
     # ---------------------------------------------------------
     # Layout
@@ -191,6 +203,10 @@ class LessonBuilder(QWidget):
             self.save_button
         )
 
+        lesson.addWidget(
+            self.save_as_button
+        )
+
         self.lesson_box.setLayout(
             lesson
         )
@@ -235,6 +251,14 @@ class LessonBuilder(QWidget):
 
         self.add_button.clicked.connect(
             self._add_to_lesson
+        )
+
+        self.save_as_button.clicked.connect(
+            self._save_as
+        )
+
+        self.save_button.clicked.connect(
+            self._save
         )
 
     # ---------------------------------------------------------
@@ -321,4 +345,103 @@ class LessonBuilder(QWidget):
 
         self.setText(
             "No preview"
+        )
+
+    def _save(
+        self,
+    ) -> None:
+        """
+        Save current lesson.
+        """
+
+        if self._lesson_directory is None:
+
+            self._save_as()
+
+            return
+
+        print(
+            f"Save: {self._lesson_directory}"
+        )
+
+
+    def _save_as(
+        self,
+    ) -> None:
+        """
+        Save lesson as...
+        """
+
+        name, ok = QInputDialog.getText(
+            self,
+            "Save lesson",
+            "Lesson name:",
+        )
+
+        if not ok:
+            return
+
+        name = name.strip()
+
+        if not name:
+            return
+
+        lessons_dir = DATASET_ROOT / "lessons"
+
+        lessons_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        lesson_dir = lessons_dir / name
+
+        if lesson_dir.exists():
+
+            QMessageBox.warning(
+                self,
+                "Lesson exists",
+                f'Lesson "{name}" already exists.',
+            )
+
+            return
+
+        lesson_dir.mkdir()
+
+        #
+        # ids
+        #
+
+        ids_path = lesson_dir / "ids"
+
+        with ids_path.open(
+            "w",
+            encoding="utf-8",
+        ) as file:
+
+            for passport in self._lesson:
+
+                file.write(
+                    f"{passport.id}\n"
+                )
+
+        #
+        # manifest
+        #
+
+        manifest = lesson_dir / "manifest"
+
+        with manifest.open(
+            "w",
+            encoding="utf-8",
+        ) as file:
+
+            file.write(f"{name}\n")
+            file.write(f"Count={len(self._lesson)}\n")
+
+        self._lesson_directory = lesson_dir
+
+        QMessageBox.information(
+            self,
+            "Saved",
+            f'Lesson "{name}" has been saved.',
         )
