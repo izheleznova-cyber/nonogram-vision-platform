@@ -253,6 +253,10 @@ class LessonBuilder(QWidget):
             self._add_to_lesson
         )
 
+        self.remove_button.clicked.connect(
+            self._remove_from_lesson
+        )
+
         self.save_as_button.clicked.connect(
             self._save_as
         )
@@ -329,6 +333,41 @@ class LessonBuilder(QWidget):
             f"{passport.title}"
         )
 
+    def _remove_from_lesson(
+        self,
+    ) -> None:
+        """
+        Remove selected passport from lesson.
+        """
+
+        row = self.lesson_list.currentRow()
+
+        if row < 0:
+            return
+
+        #
+        # Remove from model
+        #
+
+        del self._lesson[row]
+
+        #
+        # Rebuild list
+        #
+
+        self.lesson_list.clear()
+
+        for index, passport in enumerate(
+            self._lesson,
+            start=1,
+        ):
+
+            self.lesson_list.addItem(
+                f"{index:2d}   "
+                f"{passport.id:10}   "
+                f"{passport.title}"
+            )
+
     def set_passport(
         self,
         passport: PassportRecord,
@@ -354,14 +393,56 @@ class LessonBuilder(QWidget):
         Save current lesson.
         """
 
+        #
+        # Первый раз сохраняем как новый урок.
+        #
+
         if self._lesson_directory is None:
 
             self._save_as()
 
             return
 
-        print(
-            f"Save: {self._lesson_directory}"
+        #
+        # ids
+        #
+
+        ids_path = self._lesson_directory / "ids"
+
+        with ids_path.open(
+            "w",
+            encoding="utf-8",
+        ) as file:
+
+            for passport in self._lesson:
+
+                file.write(
+                    f"{passport.id}\n"
+                )
+
+        #
+        # manifest
+        #
+
+        manifest = self._lesson_directory / "manifest"
+
+        with manifest.open(
+            "w",
+            encoding="utf-8",
+        ) as file:
+
+            file.write(
+                f"{self._lesson_directory.name}\n"
+            )
+
+            file.write(
+                f"Count={len(self._lesson)}\n"
+            )
+
+        QMessageBox.information(
+            self,
+            "Saved",
+            "Lesson has been updated.",
         )
 
 
@@ -394,6 +475,8 @@ class LessonBuilder(QWidget):
         )
 
         lesson_dir = lessons_dir / name
+
+        self._lesson_directory = lesson_dir
 
         if lesson_dir.exists():
 
@@ -440,6 +523,8 @@ class LessonBuilder(QWidget):
 
         self._lesson_directory = lesson_dir
 
+        print(self._lesson_directory)
+        
         QMessageBox.information(
             self,
             "Saved",
