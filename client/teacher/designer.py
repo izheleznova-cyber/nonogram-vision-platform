@@ -42,6 +42,8 @@ class LessonDesigner(QWidget):
 
         self._stages = build_demo_stages()
 
+        self._current_stage: Stage | None = None
+
         self._populate_demo_data()
     
     def _create_ui(self) -> None:
@@ -71,6 +73,10 @@ class LessonDesigner(QWidget):
 
         self.task_list = QListWidget()
         splitter.addWidget(self.task_list)
+
+        self.task_list.currentRowChanged.connect(
+            self._on_task_selected
+        )
 
         #
         # Property list
@@ -136,8 +142,13 @@ class LessonDesigner(QWidget):
 
         stage = self._stages[index]
 
+        self._current_stage = stage
+
         for task in stage.tasks:
             self.task_list.addItem(task.title)
+
+        if self.task_list.count():
+            self.task_list.setCurrentRow(0)
 
     def load_lesson(
         self,
@@ -174,3 +185,30 @@ class LessonDesigner(QWidget):
             self.stage_tree.setCurrentItem(
                 self.stage_tree.topLevelItem(0)
             )
+
+    def _on_task_selected(
+        self,
+        row: int,
+    ) -> None:
+        """
+        Show task properties.
+        """
+
+        self.property_list.clear()
+
+        if self._current_stage is None:
+            return
+
+        if row < 0:
+            return
+
+        task = self._current_stage.tasks[row]
+
+        self.property_list.addItem(f"id: {task.id}")
+        self.property_list.addItem(f"title: {task.title}")
+        self.property_list.addItem(
+            f"asset: {task.asset_ref.asset_id}"
+        )
+        self.property_list.addItem(
+            f"answer: {task.answer_spec.type}"
+        )
