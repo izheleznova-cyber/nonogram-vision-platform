@@ -1,60 +1,49 @@
 """
-Lesson serializer.
+Lesson manifest serializer.
 """
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
-from .lesson import Lesson
+from .manifest_types import Manifest
 
 
-def save_lesson(
-    lesson: Lesson,
-    path: str | Path,
+def save_manifest(
+    manifest: Manifest,
+    filename: str | Path,
 ) -> None:
     """
-    Save lesson into a directory.
+    Save lesson manifest to JSON.
     """
 
-    path = Path(path)
+    path = Path(filename)
 
-    #
-    # Create directory if necessary.
-    #
-
-    path.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    #
-    # manifest.json
-    #
-
-    manifest = {
-        "name": lesson.name,
-        "title": lesson.title,
-        "count": lesson.count,
-        "max_width": lesson.max_width,
-        "max_height": lesson.max_height,
-    }
-
-    (path / "manifest.json").write_text(
-        json.dumps(
+    with path.open(
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
             manifest,
+            file,
             indent=4,
             ensure_ascii=False,
-        ),
-        encoding="utf-8",
-    )
+        )
 
-    #
-    # ids.txt
-    #
 
-    (path / "ids.txt").write_text(
-        "\n".join(lesson.ids) + "\n",
+def load_manifest(
+    filename: str | Path,
+) -> Manifest:
+    """
+    Load lesson manifest from JSON.
+    """
+
+    path = Path(filename)
+
+    with path.open(
+        "r",
         encoding="utf-8",
-    )
+    ) as file:
+        return json.load(file)

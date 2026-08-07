@@ -29,8 +29,14 @@ def build_manifest(lesson: Lesson) -> dict[str, Any]:
                     {
                         "id": task.id,
                         "title": task.title,
-                        "asset": task.asset_ref.asset_id,
-                        "answer": task.answer_spec.type,
+
+                        "asset_ref": {
+                            "asset_id": task.asset_ref.asset_id,
+                        },
+
+                        "answer_spec": {
+                            "type": task.answer_spec.type,
+                        }, 
                     }
                     for task in stage.tasks
                 ],

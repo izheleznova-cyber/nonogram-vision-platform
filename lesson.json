@@ -1,0 +1,53 @@
+{
+    "name": "lesson01",
+    "title": "Aircraft",
+    "max_width": 50,
+    "max_height": 42,
+    "stages": [
+        {
+            "number": 1,
+            "tasks": [
+                {
+                    "id": "solve_1",
+                    "title": "Solve nonogram",
+                    "asset_ref": {
+                        "asset_id": "IMG000001"
+                    },
+                    "answer_spec": {
+                        "type": "NonogramSolution"
+                    }
+                }
+            ]
+        },
+        {
+            "number": 2,
+            "tasks": [
+                {
+                    "id": "solve_2",
+                    "title": "Solve nonogram",
+                    "asset_ref": {
+                        "asset_id": "IMG000002"
+                    },
+                    "answer_spec": {
+                        "type": "NonogramSolution"
+                    }
+                }
+            ]
+        },
+        {
+            "number": 3,
+            "tasks": [
+                {
+                    "id": "solve_3",
+                    "title": "Solve nonogram",
+                    "asset_ref": {
+                        "asset_id": "IMG000003"
+                    },
+                    "answer_spec": {
+                        "type": "NonogramSolution"
+                    }
+                }
+            ]
+        }
+    ]
+}
