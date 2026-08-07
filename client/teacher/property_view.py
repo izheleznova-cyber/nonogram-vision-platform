@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QWidget,
+    QComboBox,
 )
 
 from core.lesson.task import Task
@@ -28,18 +29,27 @@ class PropertyView(QWidget):
 
         self.title_edit = QLineEdit()
 
-        self.asset_label = QLabel()
+        self.asset_combo = QComboBox()
 
         self.answer_label = QLabel()
 
         layout.addRow("Id", self.id_label)
         layout.addRow("Title", self.title_edit)
-        layout.addRow("Asset", self.asset_label)
+        layout.addRow(
+            "Asset",
+            self.asset_combo,
+        )
         layout.addRow("Answer", self.answer_label)
 
         self.title_edit.editingFinished.connect(
             self._title_changed
         )
+
+        self._asset_ids: list[str] = []
+        
+        self._task: Task | None = None
+
+        self.title_changed = None
 
     def show_task(
         self,
@@ -55,9 +65,12 @@ class PropertyView(QWidget):
 
         self.title_edit.setText(task.title)
 
-        self.asset_label.setText(
+        index = self.asset_combo.findText(
             task.asset_ref.asset_id
         )
+
+        if index >= 0:
+            self.asset_combo.setCurrentIndex(index)
 
         self.answer_label.setText(
             task.answer_spec.type
@@ -72,7 +85,7 @@ class PropertyView(QWidget):
 
         self.id_label.clear()
         self.title_edit.clear()
-        self.asset_label.clear()
+        self.asset_combo.clear()
         self.answer_label.clear()
 
     def _title_changed(self) -> None:
@@ -84,3 +97,20 @@ class PropertyView(QWidget):
             return
 
         self._task.title = self.title_edit.text()
+
+        if self.title_changed is not None:
+            self.title_changed()
+
+    def set_assets(
+        self,
+        asset_ids: list[str],
+    ) -> None:
+        """
+        Populate Asset combo box.
+        """
+
+        self._asset_ids = asset_ids
+
+        self.asset_combo.clear()
+
+        self.asset_combo.addItems(asset_ids)

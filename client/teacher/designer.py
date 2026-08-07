@@ -113,6 +113,10 @@ class LessonDesigner(QWidget):
         self.property_view = PropertyView()
         splitter.addWidget(self.property_view)
 
+        self.property_view.title_changed = (
+            self._refresh_task_list
+        )
+
         #
         # Signals
         #
@@ -263,3 +267,20 @@ class LessonDesigner(QWidget):
         self.task_list.setCurrentRow(
             self.task_list.count() - 1
         )
+
+    def _refresh_task_list(self) -> None:
+        """
+        Refresh task titles after editing.
+        """
+
+        if self._current_stage is None:
+            return
+
+        row = self.task_list.currentRow()
+
+        self.task_list.set_tasks(
+            self._current_stage.tasks
+        )
+
+        if row >= 0:
+            self.task_list.setCurrentRow(row)
