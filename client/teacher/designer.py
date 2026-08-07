@@ -5,6 +5,7 @@ Lesson Designer widget.
 from __future__ import annotations
 
 from PyQt6.QtWidgets import (
+    QHBoxLayout,
     QLabel,
     QListWidget,
     QPushButton,
@@ -13,13 +14,18 @@ from PyQt6.QtWidgets import (
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
+    QFormLayout,
+    QLineEdit,
 )
+
 
 from core.lesson.lesson import Lesson
 from core.lesson.stage import Stage
 
 from core.lesson.migration import build_stages
 from examples.demo_stage_model import build_demo_stages
+
+from client.teacher.toolbar import LessonToolbar
 
 class LessonDesigner(QWidget):
     """
@@ -56,6 +62,17 @@ class LessonDesigner(QWidget):
         title = QLabel("Lesson Designer")
         layout.addWidget(title)
 
+        #
+        # Toolbar
+        #
+
+        self.toolbar = LessonToolbar()
+        layout.addWidget(self.toolbar)
+
+        #
+        # Main area
+        #
+
         splitter = QSplitter()
         layout.addWidget(splitter)
 
@@ -84,13 +101,6 @@ class LessonDesigner(QWidget):
 
         self.property_list = QListWidget()
         splitter.addWidget(self.property_list)
-
-        #
-        # Save button
-        #
-
-        self.save_button = QPushButton("Save")
-        layout.addWidget(self.save_button)
 
         #
         # Signals
