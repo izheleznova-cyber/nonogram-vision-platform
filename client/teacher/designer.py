@@ -31,6 +31,10 @@ from client.teacher.stage_explorer import StageExplorer
 from client.teacher.task_list import TaskList
 from client.teacher.property_view import PropertyView
 
+from core.lesson.task import Task
+from core.lesson.asset_ref import AssetRef
+from core.lesson.answer_spec import AnswerSpec
+
 class LessonDesigner(QWidget):
     """
     Lesson Designer.
@@ -119,6 +123,10 @@ class LessonDesigner(QWidget):
 
         self.toolbar.add_stage_button.clicked.connect(
             self._add_stage
+        )
+
+        self.toolbar.add_task_button.clicked.connect(
+            self._add_task
         )
 
     def _on_stage_selected(
@@ -225,4 +233,33 @@ class LessonDesigner(QWidget):
 
         self.stage_tree.setCurrentItem(
             self.stage_tree.topLevelItem(number - 1)
+        )
+
+    def _add_task(self) -> None:
+        """
+        Add a new task to the selected stage.
+        """
+
+        if self._current_stage is None:
+            return
+
+        number = len(self._current_stage.tasks) + 1
+
+        task = Task(
+            id=f"task_{number}",
+            title="Solve nonogram",
+            asset_ref=AssetRef(asset_id=""),
+            answer_spec=AnswerSpec(
+                type="NonogramSolution",
+            ),
+        )
+
+        self._current_stage.tasks.append(task)
+
+        self.task_list.set_tasks(
+            self._current_stage.tasks
+        )
+
+        self.task_list.setCurrentRow(
+            self.task_list.count() - 1
         )
