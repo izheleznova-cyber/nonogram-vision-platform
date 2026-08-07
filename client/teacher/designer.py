@@ -117,6 +117,10 @@ class LessonDesigner(QWidget):
             self._on_stage_selected
         )
 
+        self.toolbar.add_stage_button.clicked.connect(
+            self._add_stage
+        )
+
     def _on_stage_selected(
         self,
         current: QTreeWidgetItem | None,
@@ -141,6 +145,11 @@ class LessonDesigner(QWidget):
         self._current_stage = stage
 
         self.task_list.set_tasks(stage.tasks)
+
+        if self.task_list.count():
+            self.task_list.setCurrentRow(0)
+        else:
+            self.property_view.clear()
 
         if self.task_list.count():
             self.task_list.setCurrentRow(0)
@@ -196,3 +205,24 @@ class LessonDesigner(QWidget):
         task = self._current_stage.tasks[row]
 
         self.property_view.show_task(task)
+
+    def _add_stage(self) -> None:
+        """
+        Add a new empty stage.
+        """
+
+        number = len(self._stages) + 1
+
+        stage = Stage(
+            number=number,
+            puzzle_id="",
+            tasks=[],
+        )
+
+        self._stages.append(stage)
+
+        self.stage_tree.set_stages(self._stages)
+
+        self.stage_tree.setCurrentItem(
+            self.stage_tree.topLevelItem(number - 1)
+        )
