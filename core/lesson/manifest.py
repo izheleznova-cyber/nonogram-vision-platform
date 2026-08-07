@@ -44,3 +44,27 @@ def build_manifest(lesson: Lesson) -> dict[str, Any]:
             for stage in stages
         ],
     }
+
+
+def build_lesson_from_manifest(
+    manifest: Manifest,
+) -> Lesson:
+    """
+    Build a Lesson from a lesson manifest.
+    """
+
+    ids: list[str] = []
+
+    for stage in manifest["stages"]:
+        for task in stage["tasks"]:
+            ids.append(
+                task["asset_ref"]["asset_id"]
+            )
+
+    return Lesson(
+        name=manifest["name"],
+        title=manifest["title"],
+        ids=ids,
+        max_width=manifest["max_width"],
+        max_height=manifest["max_height"],
+    )
