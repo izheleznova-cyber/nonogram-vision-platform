@@ -26,6 +26,10 @@ from core.lesson.migration import build_stages
 from examples.demo_stage_model import build_demo_stages
 
 from client.teacher.toolbar import LessonToolbar
+from client.teacher.stage_explorer import StageExplorer
+
+from client.teacher.task_list import TaskList
+from client.teacher.property_view import PropertyView
 
 class LessonDesigner(QWidget):
     """
@@ -48,10 +52,13 @@ class LessonDesigner(QWidget):
 
         self._stages = build_demo_stages()
 
+        self.stage_tree.set_stages(
+            self._stages
+        )
+
         self._current_stage: Stage | None = None
 
-        self._populate_demo_data()
-    
+            
     def _create_ui(self) -> None:
         """
         Create the user interface.
@@ -80,7 +87,7 @@ class LessonDesigner(QWidget):
         # Stage tree
         #
 
-        self.stage_tree = QTreeWidget()
+        self.stage_tree = StageExplorer()
         self.stage_tree.setHeaderLabel("Stages")
         splitter.addWidget(self.stage_tree)
 
@@ -88,7 +95,7 @@ class LessonDesigner(QWidget):
         # Task list
         #
 
-        self.task_list = QListWidget()
+        self.task_list = TaskList()
         splitter.addWidget(self.task_list)
 
         self.task_list.currentRowChanged.connect(
@@ -99,8 +106,8 @@ class LessonDesigner(QWidget):
         # Property list
         #
 
-        self.property_list = QListWidget()
-        splitter.addWidget(self.property_list)
+        self.property_view = PropertyView()
+        splitter.addWidget(self.property_view)
 
         #
         # Signals
@@ -109,25 +116,6 @@ class LessonDesigner(QWidget):
         self.stage_tree.currentItemChanged.connect(
             self._on_stage_selected
         )
-
-    def _populate_demo_data(self) -> None:
-        """
-        Populate the stage tree from demo Stage objects.
-        """
-
-        self.stage_tree.clear()
-
-        for stage in self._stages:
-            item = QTreeWidgetItem(
-                [f"Stage {stage.number}"]
-            )
-
-            self.stage_tree.addTopLevelItem(item)
-
-        if self.stage_tree.topLevelItemCount():
-            self.stage_tree.setCurrentItem(
-                self.stage_tree.topLevelItem(0)
-            )
 
     def _on_stage_selected(
         self,
@@ -139,8 +127,6 @@ class LessonDesigner(QWidget):
         """
 
         del previous
-
-        self.task_list.clear()
 
         if current is None:
             return
@@ -154,8 +140,7 @@ class LessonDesigner(QWidget):
 
         self._current_stage = stage
 
-        for task in stage.tasks:
-            self.task_list.addItem(task.title)
+        self.task_list.set_tasks(stage.tasks)
 
         if self.task_list.count():
             self.task_list.setCurrentRow(0)
@@ -171,9 +156,7 @@ class LessonDesigner(QWidget):
         self._lesson = lesson
 
         self.stage_tree.clear()
-        self.task_list.clear()
-        self.property_list.clear()
-
+        
         #
         # Build Stage objects from the legacy Lesson.
         #
@@ -204,8 +187,6 @@ class LessonDesigner(QWidget):
         Show task properties.
         """
 
-        self.property_list.clear()
-
         if self._current_stage is None:
             return
 
@@ -214,11 +195,4 @@ class LessonDesigner(QWidget):
 
         task = self._current_stage.tasks[row]
 
-        self.property_list.addItem(f"id: {task.id}")
-        self.property_list.addItem(f"title: {task.title}")
-        self.property_list.addItem(
-            f"asset: {task.asset_ref.asset_id}"
-        )
-        self.property_list.addItem(
-            f"answer: {task.answer_spec.type}"
-        )
+        self.property_view.show_task(task)
