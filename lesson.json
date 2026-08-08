@@ -8,7 +8,7 @@
             "number": 1,
             "tasks": [
                 {
-                    "id": "solve_1",
+                    "id": "solve",
                     "title": "Solve nonogram",
                     "asset_ref": {
                         "asset_id": "IMG000001"
@@ -23,13 +23,23 @@
             "number": 2,
             "tasks": [
                 {
-                    "id": "solve_2",
+                    "id": "solve",
                     "title": "Solve nonogram",
                     "asset_ref": {
                         "asset_id": "IMG000002"
                     },
                     "answer_spec": {
                         "type": "NonogramSolution"
+                    }
+                },
+                {
+                    "id": "check",
+                    "title": "Check solution",
+                    "asset_ref": {
+                        "asset_id": "IMG000002"
+                    },
+                    "answer_spec": {
+                        "type": "CheckResult"
                     }
                 }
             ]
@@ -38,10 +48,49 @@
             "number": 3,
             "tasks": [
                 {
-                    "id": "solve_3",
+                    "id": "solve",
                     "title": "Solve nonogram",
                     "asset_ref": {
                         "asset_id": "IMG000003"
+                    },
+                    "answer_spec": {
+                        "type": "NonogramSolution"
+                    }
+                },
+                {
+                    "id": "hypothesis",
+                    "title": "Describe image",
+                    "asset_ref": {
+                        "asset_id": "IMG000003"
+                    },
+                    "answer_spec": {
+                        "type": "Text"
+                    }
+                },
+                {
+                    "id": "reflection",
+                    "title": "Explain hypothesis",
+                    "asset_ref": {
+                        "asset_id": "IMG000003"
+                    },
+                    "answer_spec": {
+                        "type": "Text"
+                    }
+                }
+            ]
+        },
+        {
+            "number": 4,
+            "tasks": []
+        },
+        {
+            "number": 5,
+            "tasks": [
+                {
+                    "id": "task_1",
+                    "title": "my task",
+                    "asset_ref": {
+                        "asset_id": ""
                     },
                     "answer_spec": {
                         "type": "NonogramSolution"

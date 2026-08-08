@@ -41,6 +41,18 @@ from core.lesson.editor_migration import (
     to_lesson,
 )
 
+from pathlib import Path
+
+from PyQt6.QtWidgets import QFileDialog
+
+from core.lesson.editor_migration import to_lesson
+from core.lesson.serializer import save_manifest
+
+from core.lesson.manifest import (
+    build_manifest,
+    build_editor_manifest,
+)
+
 class LessonDesigner(QWidget):
     """
     Lesson Designer.
@@ -148,6 +160,11 @@ class LessonDesigner(QWidget):
         self.toolbar.delete_button.clicked.connect(
             self._delete_task
         )
+
+        self.toolbar.save_button.clicked.connect(
+            self._save_lesson
+        )
+
 
     def _on_stage_selected(
         self,
@@ -343,3 +360,27 @@ class LessonDesigner(QWidget):
             self.task_list.setCurrentRow(
                 min(row, self.task_list.count() - 1)
             )
+
+    def _save_lesson(self) -> None:
+        """
+        Save the current lesson.
+        """
+
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save lesson",
+            "lesson.json",
+            "Lesson (*.json)",
+        )
+
+        if not filename:
+            return
+
+        manifest = build_editor_manifest(
+            self.lesson
+        )
+
+        save_manifest(
+            manifest,
+            Path(filename),
+        )

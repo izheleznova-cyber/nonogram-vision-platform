@@ -3,11 +3,13 @@ Lesson manifest helpers.
 """
 
 from __future__ import annotations
-
 from typing import Any
 
 from .lesson import Lesson
 from .migration import build_stages
+
+from .editor_model import EditorLesson
+from .manifest_types import Manifest
 
 
 def build_manifest(lesson: Lesson) -> dict[str, Any]:
@@ -68,3 +70,36 @@ def build_lesson_from_manifest(
         max_width=manifest["max_width"],
         max_height=manifest["max_height"],
     )
+
+def build_editor_manifest(
+    lesson: EditorLesson,
+) -> dict[str, Any]:
+    """
+    Build manifest from EditorLesson.
+    """
+
+    return {
+        "name": lesson.name,
+        "title": lesson.title,
+        "max_width": lesson.max_width,
+        "max_height": lesson.max_height,
+        "stages": [
+            {
+                "number": stage.number,
+                "tasks": [
+                    {
+                        "id": task.id,
+                        "title": task.title,
+                        "asset_ref": {
+                            "asset_id": task.asset_ref.asset_id,
+                        },
+                        "answer_spec": {
+                            "type": task.answer_spec.type,
+                        },
+                    }
+                    for task in stage.tasks
+                ],
+            }
+            for stage in lesson.stages
+        ],
+    }

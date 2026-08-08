@@ -41,9 +41,9 @@ class PropertyView(QWidget):
         )
         layout.addRow("Answer", self.answer_label)
 
-        # self.title_edit.editingFinished.connect(
-        #     self._title_changed
-        # )
+        self.title_edit.editingFinished.connect(
+            self._title_changed
+        )
 
         self.asset_combo.currentTextChanged.connect(
             self._asset_changed
