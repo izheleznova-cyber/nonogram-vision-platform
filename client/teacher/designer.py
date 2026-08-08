@@ -57,6 +57,8 @@ from core.lesson.manifest import (
 from core.lesson.serializer import load_manifest
 from core.lesson.editor_loader import build_editor_lesson
 
+from core.dataset.passport_database import PassportDatabase
+
 class LessonDesigner(QWidget):
     """
     Lesson Designer.
@@ -71,6 +73,8 @@ class LessonDesigner(QWidget):
         super().__init__()
 
         self._create_ui()
+
+        self.database = PassportDatabase()
 
         #
         # Temporary demo model.
