@@ -53,6 +53,13 @@ class LessonToolbar(QWidget):
         layout.addWidget(self.down_button)
 
         #
+        # Open
+        #
+
+        self.open_button = QPushButton("Open")
+        layout.addWidget(self.open_button)
+
+        #
         # Spacer
         #
 

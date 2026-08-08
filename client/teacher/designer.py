@@ -165,6 +165,10 @@ class LessonDesigner(QWidget):
             self._delete_task
         )
 
+        self.toolbar.open_button.clicked.connect(
+            self._load_lesson
+        )
+
         self.toolbar.save_button.clicked.connect(
             self._save_lesson
         )

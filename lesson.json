@@ -76,6 +76,16 @@
                     "answer_spec": {
                         "type": "Text"
                     }
+                },
+                {
+                    "id": "task_4",
+                    "title": "my task 3",
+                    "asset_ref": {
+                        "asset_id": ""
+                    },
+                    "answer_spec": {
+                        "type": "NonogramSolution"
+                    }
                 }
             ]
         },

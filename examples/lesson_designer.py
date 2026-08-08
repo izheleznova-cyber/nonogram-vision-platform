@@ -15,12 +15,6 @@ def main() -> None:
 
     window = LessonDesigner()
     window.resize(1200, 700)
-
-    #
-    # Temporary test
-    #
-    window._load_lesson()
-
     window.show()
 
     sys.exit(app.exec())
