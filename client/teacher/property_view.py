@@ -41,8 +41,12 @@ class PropertyView(QWidget):
         )
         layout.addRow("Answer", self.answer_label)
 
-        self.title_edit.editingFinished.connect(
-            self._title_changed
+        # self.title_edit.editingFinished.connect(
+        #     self._title_changed
+        # )
+
+        self.asset_combo.currentTextChanged.connect(
+            self._asset_changed
         )
 
         self._asset_ids: list[str] = []
@@ -114,3 +118,9 @@ class PropertyView(QWidget):
         self.asset_combo.clear()
 
         self.asset_combo.addItems(asset_ids)
+
+    def _asset_changed(
+        self,
+        asset_id: str,
+    ) -> None:
+        pass

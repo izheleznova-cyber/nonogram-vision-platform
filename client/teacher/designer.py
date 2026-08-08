@@ -35,6 +35,12 @@ from core.lesson.task import Task
 from core.lesson.asset_ref import AssetRef
 from core.lesson.answer_spec import AnswerSpec
 
+from core.lesson.editor_model import EditorLesson
+from core.lesson.editor_migration import (
+    to_editor,
+    to_lesson,
+)
+
 class LessonDesigner(QWidget):
     """
     Lesson Designer.
@@ -54,10 +60,16 @@ class LessonDesigner(QWidget):
         # Temporary demo model.
         #
 
-        self._stages = build_demo_stages()
+        self.lesson = EditorLesson(
+            name="lesson01",
+            title="Aircraft",
+            max_width=50,
+            max_height=42,
+            stages=build_demo_stages(),
+        )
 
         self.stage_tree.set_stages(
-            self._stages
+            self.lesson.stages
         )
 
         self._current_stage: Stage | None = None
@@ -133,6 +145,10 @@ class LessonDesigner(QWidget):
             self._add_task
         )
 
+        self.toolbar.delete_button.clicked.connect(
+            self._delete_task
+        )
+
     def _on_stage_selected(
         self,
         current: QTreeWidgetItem | None,
@@ -152,9 +168,18 @@ class LessonDesigner(QWidget):
         if index < 0:
             return
 
-        stage = self._stages[index]
+        stage = self.lesson.stages[index]
 
         self._current_stage = stage
+
+        asset_ids = []
+
+        for task in stage.tasks:
+            asset_ids.append(
+                task.asset_ref.asset_id
+            )
+
+        self.property_view.set_assets(asset_ids)
 
         self.task_list.set_tasks(stage.tasks)
 
@@ -182,13 +207,19 @@ class LessonDesigner(QWidget):
         # Build Stage objects from the legacy Lesson.
         #
 
-        self._stages = build_stages(lesson)
+        self.lesson = EditorLesson(
+            name=lesson.name,
+            title=lesson.title,
+            max_width=lesson.max_width,
+            max_height=lesson.max_height,
+            stages=build_stages(lesson),
+        )
 
         #
         # Populate the tree.
         #
 
-        for stage in self._stages:
+        for stage in self.lesson.stages:
             item = QTreeWidgetItem(
                 [f"Stage {stage.number}"]
             )
@@ -223,7 +254,7 @@ class LessonDesigner(QWidget):
         Add a new empty stage.
         """
 
-        number = len(self._stages) + 1
+        number = len(self.lesson.stages) + 1
 
         stage = Stage(
             number=number,
@@ -231,9 +262,11 @@ class LessonDesigner(QWidget):
             tasks=[],
         )
 
-        self._stages.append(stage)
+        self.lesson.stages.append(stage)
 
-        self.stage_tree.set_stages(self._stages)
+        self.stage_tree.set_stages(
+            self.lesson.stages
+        )
 
         self.stage_tree.setCurrentItem(
             self.stage_tree.topLevelItem(number - 1)
@@ -284,3 +317,29 @@ class LessonDesigner(QWidget):
 
         if row >= 0:
             self.task_list.setCurrentRow(row)
+
+    def _delete_task(self) -> None:
+        """
+        Delete the selected task.
+        """
+
+        if self._current_stage is None:
+            return
+
+        row = self.task_list.currentRow()
+
+        if row < 0:
+            return
+
+        del self._current_stage.tasks[row]
+
+        self.task_list.set_tasks(
+            self._current_stage.tasks
+        )
+
+        self.property_view.clear()
+
+        if self.task_list.count():
+            self.task_list.setCurrentRow(
+                min(row, self.task_list.count() - 1)
+            )
