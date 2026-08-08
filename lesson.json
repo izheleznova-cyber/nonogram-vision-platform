@@ -81,7 +81,18 @@
         },
         {
             "number": 4,
-            "tasks": []
+            "tasks": [
+                {
+                    "id": "task_1",
+                    "title": "my task 2",
+                    "asset_ref": {
+                        "asset_id": ""
+                    },
+                    "answer_spec": {
+                        "type": "NonogramSolution"
+                    }
+                }
+            ]
         },
         {
             "number": 5,

@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QWidget,
     QFormLayout,
     QLineEdit,
+    QFileDialog,
 )
 
 
@@ -52,6 +53,9 @@ from core.lesson.manifest import (
     build_manifest,
     build_editor_manifest,
 )
+
+from core.lesson.serializer import load_manifest
+from core.lesson.editor_loader import build_editor_lesson
 
 class LessonDesigner(QWidget):
     """
@@ -384,3 +388,33 @@ class LessonDesigner(QWidget):
             manifest,
             Path(filename),
         )
+
+    def _load_lesson(self) -> None:
+        """
+        Load lesson from manifest.
+        """
+
+        filename, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open lesson",
+            "",
+            "Lesson (*.json)",
+        )
+
+        if not filename:
+            return
+
+        manifest = load_manifest(filename)
+
+        self.lesson = build_editor_lesson(
+            manifest
+        )
+
+        self.stage_tree.set_stages(
+            self.lesson.stages
+        )
+
+        if self.stage_tree.topLevelItemCount():
+            self.stage_tree.setCurrentItem(
+                self.stage_tree.topLevelItem(0)
+            )
